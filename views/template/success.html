@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Thành công{% endblock %}
+
+{% block content %}
+    <h1>Thành công</h1>
+    <div class="alert alert-success" role="alert">
+        {{ message }}
+    </div>
+    <div class="alert alert-warning" role="alert">
+        Cảnh báo: Phòng của bạn sẽ tự động hủy nếu không check-in đúng giờ.
+    </div>
+    <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-primary">Quay lại Bảng điều khiển</a>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Báo cáo chi tiết{% endblock %}
+
+{% block content %}
+    <h1>Báo cáo chi tiết</h1>
+    <a href="#" class="btn btn-primary mb-3">Xuất báo cáo</a>
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" href="#overview" data-bs-toggle="tab">Tổng quan</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#iot" data-bs-toggle="tab">Thiết bị IoT</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#history" data-bs-toggle="tab">Lịch sử đặt</a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="overview">
+            <h3>Tổng quan</h3>
+            <p><strong>Tổng số phòng:</strong> {{ total_rooms }}</p>
+            <p><strong>Thiết bị hoạt động:</strong> {{ active_devices }}/{{ total_devices }}</p>
+            <p><strong>Tỷ lệ đặt phòng:</strong> {{ booking_rate }}%</p>
+            <p><strong>Đang sử dụng:</strong> {{ in_use }}</p>
+            <!-- Placeholder for usage chart -->
+            <p><strong>Biểu đồ sử dụng:</strong> (Biểu đồ sẽ được thêm sau)</p>
+            <h4>Thống kê chi tiết</h4>
+            <p><strong>Tổng số lần đặt:</strong> {{ total_bookings }}</p>
+            <p><strong>Thời gian trung bình/lần:</strong> {{ avg_time }}</p>
+            <p><strong>Phòng được đặt nhiều nhất:</strong> {{ most_booked_room }}</p>
+            <p><strong>Khung giờ cao điểm:</strong> {{ peak_hours }}</p>
+        </div>
+        <div class="tab-pane" id="iot">
+            <h3>Thiết bị IoT</h3>
+            <p><strong>Tổng thiết bị:</strong> {{ total_devices }}</p>
+            <p><strong>Cần bảo trì:</strong> {{ maintenance_needed }}</p>
+            {% for device in devices %}
+                <p><strong>{{ device.room.roomID }}</strong> - Bảo trì: {{ device.maintenance_date }}</p>
+                <ul>
+                    {% for equip in device.equipment %}
+                        <li>{{ equip }}</li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
+        </div>
+        <div class="tab-pane" id="history">
+            <h3>Lịch sử đặt phòng gần đây</h3>
+            {% for booking in bookings %}
+                <p>{{ booking.room.roomID }} - {{ booking.timeSlot.startTime.strftime('%d/%m/%Y %H:%M') }} - {{ booking.timeSlot.endTime.strftime('%H:%M') }} - {{ 'Hoàn thành' if booking.status == 'confirmed' else 'Đã hủy' }}</p>
+            {% endfor %}
+        </div>
+    </div>
+    <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary mt-3">Quay lại</a>
+{% endblock %}

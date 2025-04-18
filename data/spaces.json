@@ -1,0 +1,4 @@
+[
+    {"id": 1, "name": "Room A1", "type": "individual", "status": "available", "equipment": ["whiteboard"]},
+    {"id": 2, "name": "Room B2", "type": "group", "status": "available", "equipment": ["projector", "AC"]}
+]

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Đăng xuất{% endblock %}
+
+{% block content %}
+    <h1>Đăng xuất</h1>
+    <p>Bạn có chắc chắn muốn đăng xuất không?</p>
+    <form method="POST" action="{{ url_for('auth.logout') }}">
+        <button type="submit" class="btn btn-danger">Đăng xuất</button>
+        <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary">Không</a>
+    </form>
+{% endblock %}

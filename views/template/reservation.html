@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Đặt Phòng {{ space.roomID }}{% endblock %}
+
+{% block content %}
+    <h1>Phòng {{ space.roomID }}</h1>
+    <div class="mb-3">
+        <strong>Loại phòng:</strong>
+        <select class="form-control" id="room_type" name="room_type" disabled>
+            <option value="individual" {% if space.type == 'individual' %}selected{% endif %}>Phòng Cá Nhân</option>
+            <option value="group" {% if space.type == 'group' %}selected{% endif %}>Phòng Nhóm</option>
+        </select>
+    </div>
+    {% if space.status == 'available' %}
+        <p><strong>Trình trạng:</strong> Phòng Trống</p>
+        <form method="POST">
+            <div class="mb-3">
+                <label for="start_time" class="form-label">Thời gian</label>
+                <input type="text" class="form-control" id="start_time" name="start_time" placeholder="2025-04-18 14:00" required>
+            </div>
+            <div class="mb-3">
+                <label for="end_time" class="form-label">Thời gian kết thúc (Tùy chọn)</label>
+                <input type="text" class="form-control" id="end_time" name="end_time" placeholder="2025-04-18 15:00">
+            </div>
+            <input type="hidden" name="room_type" value="{{ space.type }}">
+            <button type="submit" class="btn btn-primary">Đặt Ngay</button>
+        </form>
+    {% else %}
+        <p><strong>Trình trạng:</strong> Đã đặt phòng</p>
+        <p><strong>Thời gian:</strong> {{ space.timeSlot.startTime.strftime('%d/%m/%Y %H:%M') if space.timeSlot else 'N/A' }} - {{ space.timeSlot.endTime.strftime('%H:%M') if space.timeSlot else 'N/A' }}</p>
+        <form method="POST" action="{{ url_for('reservation.cancel_reservation', space_id=space.roomID) }}">
+            <button type="submit" class="btn btn-danger">Hủy phòng</button>
+        </form>
+    {% endif %}
+    <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary mt-3">Quay lại</a>
+{% endblock %}

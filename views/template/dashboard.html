@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Bảng điều khiển{% endblock %}
+
+{% block content %}
+    <h1>Bảng điều khiển</h1>
+    <h3>Bộ lọc</h3>
+    <form method="GET" class="mb-4">
+        <div class="mb-3">
+            <label for="time" class="form-label">Thời gian</label>
+            <input type="text" class="form-control" id="time" name="time" placeholder="2025-04-18 14:00" value="{{ request.args.get('time', '') }}">
+        </div>
+        <div class="mb-3">
+            <label for="capacity" class="form-label">Sức chứa tối thiểu</label>
+            <input type="number" class="form-control" id="capacity" name="capacity" placeholder="2" value="{{ request.args.get('capacity', '') }}">
+        </div>
+        <div class="mb-3">
+            <label for="equipment" class="form-label">Tất cả thiết bị</label>
+            <select class="form-control" id="equipment" name="equipment">
+                <option value="">Chọn thiết bị</option>
+                <option value="whiteboard">Bảng trắng</option>
+                <option value="projector">Máy chiếu</option>
+                <option value="AC">Điều hòa</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Lọc</button>
+    </form>
+
+    {% if spaces %}
+        <ul class="list-group">
+            {% for space in spaces %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ space.roomID }}</span>
+                    {% if space.status == 'available' %}
+                        <a href="{{ url_for('reservation.reserve_space', space_id=space.roomID) }}" class="btn btn-primary btn-sm">Đặt Ngay</a>
+                    {% elif space.status == 'reserved' and session.user.role == 'student' %}
+                        <a href="{{ url_for('reservation.checkin', space_id=space.roomID) }}" class="btn btn-primary btn-sm">Check-In</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Không có phòng học nào khả dụng.</p>
+    {% endif %}
+
+    {% if session.user.role == 'admin' %}
+        <a href="{{ url_for('reservation.auto_cancel') }}" class="btn btn-danger mt-3">Tự động hủy đặt phòng hết hạn</a>
+    {% endif %}
+{% endblock %}
