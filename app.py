@@ -1,11 +1,12 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, render_template
 from controllers.auth_controller import auth_bp
 from controllers.reservation_controller import reservation_bp
 from controllers.iot_controller import iot_bp
 from models.user import Student, Admin
 from models.study_space import Room
+from models.iot_device import IoTDevice
 
-app = Flask(__name__, template_folder='views/template', static_folder='static')
+app = Flask(__name__, template_folder='views/template', static_folder='views/static')
 app.secret_key = 's3mrs_demo'  # Required for session management
 
 # Register blueprints for controllers
@@ -21,12 +22,11 @@ def init_data():
     Admin("2", "Admin One", "admin1@hcmut.edu.vn")
 
     # Create sample rooms with equipment
-    Room("P.101", "individual", 2, ["Máy chiếu", "Điều hòa"], "available", "Building A")
+    Room("P.101", "individual", 2, ["Máy chiếu", "Điều hòa"], "reserved", "Building A")
     Room("P.102", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
     Room("P.103", "individual", 2, ["Máy chiếu", "Điều hòa"], "available", "Building A")
     Room("P.104", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
-
-
+    # IoTDevice("AC", "P.101","ok")
 # Initialize data on app startup
 init_data()
 
@@ -35,6 +35,10 @@ init_data()
 @app.route('/')
 def index():
     return redirect(url_for('auth.login'))
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    return render_template('logout.html', hide_bottom_nav=True)
 
 
 if __name__ == '__main__':

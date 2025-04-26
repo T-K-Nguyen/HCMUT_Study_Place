@@ -3,47 +3,346 @@
 {% block title %}Bảng điều khiển{% endblock %}
 
 {% block content %}
-    <h1>Bảng điều khiển</h1>
-    <h3>Bộ lọc</h3>
-    <form method="GET" class="mb-4">
-        <div class="mb-3">
-            <label for="time" class="form-label">Thời gian</label>
-            <input type="text" class="form-control" id="time" name="time" placeholder="2025-04-18 14:00" value="{{ request.args.get('time', '') }}">
-        </div>
-        <div class="mb-3">
-            <label for="capacity" class="form-label">Sức chứa tối thiểu</label>
-            <input type="number" class="form-control" id="capacity" name="capacity" placeholder="2" value="{{ request.args.get('capacity', '') }}">
-        </div>
-        <div class="mb-3">
-            <label for="equipment" class="form-label">Tất cả thiết bị</label>
-            <select class="form-control" id="equipment" name="equipment">
-                <option value="">Chọn thiết bị</option>
-                <option value="whiteboard">Bảng trắng</option>
-                <option value="projector">Máy chiếu</option>
-                <option value="AC">Điều hòa</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Lọc</button>
-    </form>
+<link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
-    {% if spaces %}
-        <ul class="list-group">
-            {% for space in spaces %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ space.roomID }}</span>
-                    {% if space.status == 'available' %}
-                        <a href="{{ url_for('reservation.reserve_space', space_id=space.roomID) }}" class="btn btn-primary btn-sm">Đặt Ngay</a>
-                    {% elif space.status == 'reserved' and session.user.role == 'student' %}
-                        <a href="{{ url_for('reservation.checkin', space_id=space.roomID) }}" class="btn btn-primary btn-sm">Check-In</a>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Không có phòng học nào khả dụng.</p>
-    {% endif %}
+<style>
+    /* Mobile Layout (Default) */
+    .dashboard-container {
+        padding: 10px;
+        background-color: #f8f9fa; /* Match body background for mobile */
+    }
+    .filter-form {
+        margin-bottom: 20px;
+    }
+    .space-card {
+        height: 100%;
+    }
+    .space-card .card-body {
+        padding: 15px;
+    }
+    .space-card .card-title {
+        font-size: 1.1rem;
+    }
+    .space-card .card-text {
+        font-size: 0.9rem;
+    }
+    .space-card .badge {
+        font-size: 0.8rem;
+    }
+    .space-card .btn {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    /* Centering the filter button */
+    .center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px; /* Add spacing between buttons */
+    }
+
+    /* Remove the default multi-select height since Choices.js will handle it */
+    .form-select[multiple] {
+        display: none; /* Hide the original select since Choices.js replaces it */
+    }
+
+    /* Choices.js custom styles to match the design */
+    .choices {
+        margin-bottom: 0; /* Match Bootstrap's form-control margin */
+    }
+
+    .choices__inner {
+        background-color: #fff;
+        border: 1px solid #ced4da; /* Match form-control border */
+        border-radius: 0.25rem; /* Match form-control border-radius */
+        padding: 8px; /* Reduced padding for mobile */
+        font-size: 0.9rem; /* Match form-control font size */
+        min-height: 36px; /* Slightly smaller height for mobile */
+        box-shadow: none; /* Remove default Choices.js shadow */
+    }
+
+    .choices[data-type*="select-multiple"] .choices__inner {
+        padding-bottom: 4px; /* Adjust padding to accommodate multiple selections */
+    }
+
+    .choices__list--multiple .choices__item {
+        background-color: #f8f9fa; /* Match badge bg-light */
+        border: 1px solid #dee2e6; /* Match badge border */
+        color: #212529; /* Match badge text-dark */
+        border-radius: 0.25rem; /* Match badge border-radius */
+        font-size: 0.8rem; /* Match badge font size */
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+
+    .choices__list--multiple .choices__item--selectable {
+        padding-right: 20px; /* Space for the remove button */
+    }
+
+    .choices__list--multiple .choices__button {
+        border-left: 1px solid #dee2e6;
+        color: #dc3545; /* Red color for the remove button, matching btn-danger */
+        font-weight: bold;
+        background-color: #212529;
+    }
+
+    .choices__list--dropdown {
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem; /* Match form-control border-radius */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Match filter-form shadow */
+        margin-top: 5px;
+    }
+
+    .choices__list--dropdown .choices__item--selectable {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+
+    .choices__list--dropdown .choices__item--selectable.is-highlighted {
+        background-color: #e3f2fd; /* Match dropdown hover from report.html */
+        color: #007bff; /* Match dropdown hover text color */
+    }
+
+    /* Status icon styling */
+    .status-icon {
+        font-size: 1rem; /* Match badge font size */
+        line-height: 1; /* Prevent extra spacing */
+    }
+
+    /* Filter form improvements */
+    .filter-form .form-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9rem;
+        margin-bottom: 5px; /* Reduced spacing */
+    }
+
+    .filter-form .form-control {
+        font-size: 0.9rem;
+        padding: 8px;
+        border-radius: 0.25rem;
+        transition: border-color 0.2s;
+    }
+
+    .filter-form .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    }
+
+    .filter-form .mb-2, .filter-form .mb-3 {
+        margin-bottom: 10px !important; /* Reduced spacing between fields */
+    }
+
+    /* Desktop Layout (Screen width >= 768px) */
+    @media (min-width: 768px) {
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* Gradient background for desktop */
+        }
+        .dashboard-container {
+            padding: 20px;
+            max-width: 1000px; /* Limit width for desktop */
+            margin: 0 auto;
+            background-color: #fff; /* White background for content area */
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .filter-form {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .filter-form .row {
+            margin: 0 -10px;
+        }
+        .filter-form .col-md-6 {
+            padding: 0 10px;
+        }
+        .filter-form .form-label {
+            font-size: 1.1rem;
+            gap: 8px;
+        }
+        .filter-form .form-control,
+        .filter-form .choices__inner {
+            font-size: 1rem;
+            padding: 10px;
+            min-height: 38px;
+        }
+        .filter-form .btn {
+            font-size: 1rem;
+            padding: 10px 20px;
+        }
+        .space-card {
+            transition: transform 0.2s; /* Add hover effect */
+        }
+        .space-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .space-card .card-body {
+            padding: 20px;
+        }
+        .space-card .card-title {
+            font-size: 1.2rem;
+        }
+        .space-card .card-text {
+            font-size: 1rem;
+        }
+        .space-card .badge {
+            font-size: 0.9rem;
+        }
+        .space-card .btn {
+            font-size: 1rem;
+            padding: 10px;
+        }
+        .row.g-3 {
+            margin: 0 -15px; /* Adjust for wider layout */
+        }
+        .col-6 {
+            padding: 15px;
+        }
+        .auto-cancel-btn {
+            max-width: 300px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            padding: 10px;
+        }
+        .button-resize {
+            max-width: 200px;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+        /* Ensure the button doesn't stretch to full width on desktop */
+        .center .btn {
+            width: auto; /* Override w-100 on desktop */
+        }
+        /* Status icon on desktop */
+        .status-icon {
+            font-size: 1.1rem;
+        }
+        .button-resize:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background-color: #007bff; /* Slightly darker shade of #4f80ff */
+        }
+        .button-resize.btn-outline-secondary:hover {
+            background-color: #dc3545; /* Red hover for the Clear button */
+            color: #fff; /* White text on hover for contrast */
+        }
+        .button-eff {
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+        .button-eff:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+    }
+</style>
+<br>
+<div class="dashboard-container">
+    <div class="mb-4 filter-form">
+        <h2 class="fw-bold">Dashboard</h2>
+        <br>
+        <form method="GET" class="bg-white p-3 rounded shadow-sm">
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <label for="time" class="form-label">
+                        <i class="bi bi-clock"></i> Time
+                    </label>
+                    <input type="datetime-local" class="form-control" id="time" name="time" required
+                           value="{{ request.args.get('time', '') }}">
+                </div>
+                <div class="col-md-6 mb-2">
+                    <label for="capacity" class="form-label">
+                        <i class="bi bi-people"></i> Minimum Capacity
+                    </label>
+                    <input type="number" class="form-control" id="capacity" name="capacity" placeholder="Enter capacity"
+                           value="{{ request.args.get('capacity', '') }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="equipment" class="form-label">
+                    <i class="bi bi-gear"></i> Equipments
+                </label>
+                <select class="form-select" id="equipment" name="equipment[]" multiple>
+                    <option value="AC">Air Conditioner</option>
+                    <option value="projector">Projector</option>
+                    <option value="smartboard">Smartboard</option>
+                </select>
+            </div>
+            <div class="center">
+                <button type="submit" class="btn btn-primary button-resize">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+                <button type="reset" class="btn btn-outline-secondary button-resize">
+                    <i class="bi bi-x-circle me-1"></i> Clear
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-3">
+        {% for space in spaces %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card shadow-sm space-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">Room {{ space.roomID }}</h5>
+                        <span class="status-icon">
+                            {% if space.status == 'available' %}
+                                <i class="fa-solid fa-circle-check" style="color: #63E6BE;"></i>
+                            {% elif space.status == 'reserved' %}
+                                <i class="fa-solid fa-circle-xmark" style="color: #ff0000;"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-info" style="color: #FFD43B;"></i>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <p class="card-text mb-1">
+                        <i class="bi bi-people"></i> {{ space.capacity }} peoples
+                    </p>
+                    <p class="card-text mb-1">
+                        <i class="bi bi-clock"></i> {{ space.timeslot }}
+                    </p>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for tag in space.equipment %}
+                        <span class="badge bg-light border text-dark">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        {% if space.status == 'available' %}
+                        <a href="{{ url_for('reservation.reserve_space', space_id=space.roomID) }}" class="btn btn-primary btn-sm w-100 button-resize">Book now</a>
+                        {% elif space.status == 'reserved' and session.user.role == 'student' %}
+                        <a href="{{ url_for('reservation.checkin', space_id=space.roomID) }}" class="btn btn-warning btn-sm w-100">Check-In</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 
     {% if session.user.role == 'admin' %}
-        <a href="{{ url_for('reservation.auto_cancel') }}" class="btn btn-danger mt-3">Tự động hủy đặt phòng hết hạn</a>
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('reservation.auto_cancel') }}" class="btn btn-danger w-100 auto-cancel-btn button-eff">Cancel expired reservations</a>
+    </div>
     {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const equipmentSelect = document.getElementById('equipment');
+        new Choices(equipmentSelect, {
+            removeItemButton: true,
+            placeholderValue: 'Select equipments',
+            classNames: {
+                containerOuter: 'choices form-control', // Add form-control class to match Bootstrap styling
+            }
+        });
+    });
+</script>
 {% endblock %}

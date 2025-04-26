@@ -3,34 +3,135 @@
 {% block title %}Đặt Phòng {{ space.roomID }}{% endblock %}
 
 {% block content %}
-    <h1>Phòng {{ space.roomID }}</h1>
-    <div class="mb-3">
-        <strong>Loại phòng:</strong>
-        <select class="form-control" id="room_type" name="room_type" disabled>
-            <option value="individual" {% if space.type == 'individual' %}selected{% endif %}>Phòng Cá Nhân</option>
-            <option value="group" {% if space.type == 'group' %}selected{% endif %}>Phòng Nhóm</option>
-        </select>
+<br>
+<div class="reserv-container">
+  <div class="d-flex flex-column align-items-center" style="padding: 20px;">
+    <h1 class="fw-bold mb-4">Room Reservation</h1>
+
+    <div class="w-100 mb-3 p-3 bg-white rounded shadow-sm">
+      <div class="text-center fw-bold mb-2">Room {{ space.roomID }}</div>
+      <div class="d-flex justify-content-center gap-2">
+        <button type="button" class="btn btn-sm {% if space.type == 'individual' %}btn-primary{% else %}btn-outline-primary{% endif %}" disabled>Private Room</button>
+        <button type="button" class="btn btn-sm {% if space.type == 'group' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="background-color: #007bff;" disabled>Group Room</button>
+      </div>
     </div>
-    {% if space.status == 'available' %}
-        <p><strong>Trình trạng:</strong> Phòng Trống</p>
-        <form method="POST">
-            <div class="mb-3">
-                <label for="start_time" class="form-label">Thời gian</label>
-                <input type="text" class="form-control" id="start_time" name="start_time" placeholder="2025-04-18 14:00" required>
-            </div>
-            <div class="mb-3">
-                <label for="end_time" class="form-label">Thời gian kết thúc (Tùy chọn)</label>
-                <input type="text" class="form-control" id="end_time" name="end_time" placeholder="2025-04-18 15:00">
-            </div>
-            <input type="hidden" name="room_type" value="{{ space.type }}">
-            <button type="submit" class="btn btn-primary">Đặt Ngay</button>
-        </form>
-    {% else %}
-        <p><strong>Trình trạng:</strong> Đã đặt phòng</p>
-        <p><strong>Thời gian:</strong> {{ space.timeSlot.startTime.strftime('%d/%m/%Y %H:%M') if space.timeSlot else 'N/A' }} - {{ space.timeSlot.endTime.strftime('%H:%M') if space.timeSlot else 'N/A' }}</p>
-        <form method="POST" action="{{ url_for('reservation.cancel_reservation', space_id=space.roomID) }}">
-            <button type="submit" class="btn btn-danger">Hủy phòng</button>
-        </form>
-    {% endif %}
-    <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary mt-3">Quay lại</a>
+
+    <form method="POST" class="w-100">
+      <div class="w-100 mb-3 p-3 bg-white rounded shadow-sm">
+        <div class="fw-semibold mb-2">Time</div>
+        <input type="datetime-local" class="form-control text-center bg-light" name="time" required
+               value="{{ request.args.get('time', '') }}">
+      </div>
+
+      <div class="w-100 mb-4 p-3 bg-white rounded shadow-sm">
+        <div class="fw-semibold mb-2">Status</div>
+        <div class="status-indicator text-center">
+          <span class="badge {% if space.status == 'available' %}bg-success{% else %}bg-danger{% endif %} text-white">
+            <i class="bi {% if space.status == 'available' %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %} me-1"></i>
+            {{ 'Available' if space.status == 'available' else 'Unavailable' }}
+            <br>
+          </span>
+        </div>
+      </div>
+      <br>
+      <input type="hidden" name="room_type" value="{{ space.type }}">
+      <div class="center">
+        <button type="submit" class="btn btn-primary w-100 mb-3 button-resize book-now-btn" style="background-color: #007bff; border: none;">Book Now</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  /* Mobile Layout (Default) */
+  .reserv-container {
+    padding: 10px;
+    background-color: #f8f9fa; /* Match body background for mobile */
+  }
+
+  .reserv-container h1 {
+    font-size: 1.5rem; /* Smaller heading for mobile */
+  }
+
+  .reserv-container .btn {
+    font-size: 0.9rem; /* Smaller buttons for mobile */
+    padding: 8px;
+  }
+
+  .reserv-container .form-control {
+    font-size: 0.9rem; /* Smaller inputs for mobile */
+    padding: 8px;
+  }
+
+  /* Centering class for buttons */
+  .center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Button resize class */
+  .button-resize {
+    max-width: 200px;
+  }
+
+  /* Status indicator styling */
+  .status-indicator .badge {
+    font-size: 1rem;
+    padding: 8px 16px;
+    border-radius: 20px; /* Pill-shaped badge */
+  }
+
+  /* Hover effect for Book Now button */
+  .book-now-btn {
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+  }
+
+  .book-now-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background-color: #007bff; /* Slightly darker shade of #4f80ff */
+  }
+
+  /* Desktop Layout (Screen width >= 768px) */
+  @media (min-width: 768px) {
+    body {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* Gradient background for desktop */
+    }
+
+    .reserv-container {
+      max-width: 700px; /* Limit width to 1000px */
+      margin: 0 auto; /* Center the container */
+      background-color: #fff; /* White background for content area */
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .reserv-container h1 {
+      font-size: 2rem; /* Larger heading for desktop */
+    }
+
+    .reserv-container .btn {
+      font-size: 1rem; /* Larger buttons for desktop */
+      padding: 10px;
+    }
+
+    .reserv-container .form-control {
+      font-size: 1rem; /* Larger inputs for desktop */
+      padding: 10px;
+    }
+
+    /* Ensure buttons don't stretch to full width on desktop */
+    .center .btn {
+      width: auto; /* Override w-100 on desktop */
+    }
+
+    /* Status indicator on desktop */
+    .status-indicator .badge {
+      font-size: 1.1rem;
+      padding: 10px 20px;
+    }
+  }
+</style>
 {% endblock %}

@@ -3,69 +3,100 @@
 {% block title %}Check-in{% endblock %}
 
 {% block content %}
-    <h1>Check-in</h1>
+{% set hide_bottom_nav = True %}
+{% set disable_body_scroll = True %}
+<style>
+    .button-eff{
+        transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+    }
+    .button-eff:hover{
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+</style>
+<div class="header text-center py-3">
+    <h4 class="fw-bold">Check-in</h4>
+</div>
+<div class="main-content d-flex flex-column align-items-center justify-content-center p-3">
     {% if message %}
         <div class="alert alert-success" role="alert">
             {{ message }}
         </div>
-        <h3>Phòng {{ space.roomID }}</h3>
-        <p>{{ space.timeSlot.startTime.strftime('%H:%M') if space.timeSlot else 'N/A' }} - {{ space.timeSlot.endTime.strftime('%H:%M') if space.timeSlot else 'N/A' }}</p>
-        <h4>Thiết bị IoT</h4>
-        <ul>
-            {% for equip in space.equipment %}
-                <li>{{ equip }}</li>
-            {% endfor %}
-        </ul>
+        <div class="room-info bg-white border rounded p-3" style="width: 100%; max-width: 300px;">
+            <p><strong>Room {{ space.roomID }}</strong></p>
+            <p class="icon-text d-flex align-items-center gap-2">
+                <i class="bi bi-clock"></i>
+                {{ space.timeSlot.startTime.strftime('%H:%M') if space.timeSlot else 'N/A' }} - {{ space.timeSlot.endTime.strftime('%H:%M') if space.timeSlot else 'N/A' }}
+            </p>
+            <p class="icon-text d-flex align-items-center gap-2">
+                <i class="bi bi-gear"></i>
+                {% for equip in space.equipment %}
+                    {{ equip }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        </div>
     {% else %}
         {% if error %}
             <div class="alert alert-danger" role="alert">
                 {{ error }}
             </div>
         {% endif %}
-        <p>Phòng {{ space.roomID }}</p>
-        <div>
-            <video id="video" style="display: none;"></video>
-            <canvas id="canvas" style="width: 100%; border: 1px solid #ddd;"></canvas>
-            <button class="btn btn-primary mb-3" onclick="startQRScanner()">Nhấn để quét mã QR</button>
+        <div class="qr-placeholder bg-white border rounded d-flex flex-column align-items-center justify-content-center mb-3" style="width: 100%; max-width: 300px; height: 200px; position: relative;">
+            <div style="font-size: 2rem; color: #aaa;">⟟⟟</div>
+            <div style="position: absolute; bottom: 10px; font-size: 0.9rem; color: #555;">Tap to scan QR code</div>
         </div>
-        <form method="POST" id="qrForm">
-            <div class="mb-3">
-                <label for="qr_code" class="form-label">Mã QR</label>
-                <input type="text" class="form-control" id="qr_code" name="qr_code" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Check-in</button>
-        </form>
+        <button class="scan-button btn mb-3 button-eff" onclick="startQRScanner()" style="background-color: #007bff; color: #fff; width: 100%; max-width: 300px;">Scan QR Code</button>
+        <div class="room-info bg-white border rounded p-3" style="width: 100%; max-width: 300px;">
+            <p><strong>Phòng {{ space.roomID }}</strong></p>
+            <p class="icon-text d-flex align-items-center gap-2">
+                <i class="bi bi-clock"></i>
+                {{ space.timeSlot.startTime.strftime('%H:%M') if space.timeSlot else 'N/A' }} - {{ space.timeSlot.endTime.strftime('%H:%M') if space.timeSlot else 'N/A' }}
+            </p>
+            <p class="icon-text d-flex align-items-center gap-2">
+                <i class="bi bi-gear"></i>
+                {% for equip in space.equipment %}
+                    {{ equip }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        </div>
+        <div style="display: none;">
+            <video id="video"></video>
+            <canvas id="canvas"></canvas>
+            <form method="POST" id="qrForm">
+                <input type="text" id="qr_code" name="qr_code">
+            </form>
+        </div>
     {% endif %}
-    <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary mt-3">Quay lại</a>
+</div>
 
-    <script>
-        async function startQRScanner() {
-            const video = document.getElementById('video');
-            const canvasElement = document.getElementById('canvas');
-            const canvas = canvasElement.getContext('2d');
+<script>
+    async function startQRScanner() {
+        const video = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const canvas = canvasElement.getContext('2d');
 
-            // Request camera access
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            video.srcObject = stream;
-            video.play();
+        // Request camera access
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        video.play();
 
-            canvasElement.style.display = 'block';
-            video.style.display = 'none';
+        canvasElement.style.display = 'block';
+        video.style.display = 'none';
 
-            function tick() {
-                canvasElement.height = video.videoHeight;
-                canvasElement.width = video.videoWidth;
-                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code) {
-                    document.getElementById('qr_code').value = code.data;
-                    document.getElementById('qrForm').submit(); // Auto-submit the form
-                } else {
-                    requestAnimationFrame(tick);
-                }
+        function tick() {
+            canvasElement.height = video.videoHeight;
+            canvasElement.width = video.videoWidth;
+            canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+            const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code) {
+                document.getElementById('qr_code').value = code.data;
+                document.getElementById('qrForm').submit(); // Auto-submit the form
+            } else {
+                requestAnimationFrame(tick);
             }
-            requestAnimationFrame(tick);
         }
-    </script>
+        requestAnimationFrame(tick);
+    }
+</script>
 {% endblock %}
