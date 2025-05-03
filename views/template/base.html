@@ -18,9 +18,21 @@
     <style>
         body {
             padding-top: 0;
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* Default light mode background */
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             font-size: 16px; /* Better for mobile */
+            color: #333; /* Default text color */
+            transition: background 0.3s ease, color 0.3s ease;
+            margin: 0;
+            min-height: 100vh;
         }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%); /* Dark mode background */
+            color: #e0e0e0; /* Text color for dark mode */
+        }
+
         .navbar {
             padding: 10px;
         }
@@ -52,18 +64,137 @@
             justify-content: space-around;
             padding: 10px 0;
             z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* Add shadow for better visibility */
+        }
+        body.dark-mode .bottom-nav {
+            background-color: #2c3e50;
+            border-top: 1px solid #34495e;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3); /* Darker shadow for dark mode */
         }
         .bottom-nav a {
             color: #555;
             text-align: center;
             font-size: 0.9rem;
+            text-decoration: none;
+            transition: color 0.3s ease, transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 20%; /* Equal width for all items */
         }
         .bottom-nav a.active {
             color: #007bff;
         }
+        body.dark-mode .bottom-nav a.active {
+            color: #4f80ff;
+        }
+        .bottom-nav a i {
+            font-size: 1.5rem;
+            margin-bottom: 2px; /* Consistent spacing between icon and text */
+        }
+        .bottom-nav a small {
+            line-height: 1; /* Ensure text aligns tightly */
+            margin: 0;
+            padding: 0;
+        }
+        /* Theme Toggle Button Styling for Bottom Nav */
+        .bottom-nav .theme-toggle-btn {
+            color: #555;
+            text-align: center;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: color 0.3s ease, transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 20%; /* Equal width for all items */
+        }
+        body.dark-mode .bottom-nav .theme-toggle-btn {
+            color: #e0e0e0;
+        }
+        .bottom-nav .theme-toggle-btn:hover {
+            color: #007bff;
+            transform: translateY(-5px); /* Move up on hover */
+        }
+        body.dark-mode .bottom-nav .theme-toggle-btn:hover {
+            color: #f9ff42; /* Yellow hover color for dark mode */
+            transform: translateY(-5px);
+        }
         /* Top Navigation for Desktop */
         .top-nav-desktop {
             display: none; /* Hidden by default on mobile */
+        }
+        /* Dropdown Styling */
+        .dropdown-menu {
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 5px;
+            padding: 0; /* Remove default padding to control it ourselves */
+            height: 90px;
+            opacity: 0; /* Start hidden */
+            transform: translateY(-10px); /* Start slightly above */
+            transition: opacity 0.3s ease, transform 0.3s ease; /* Smooth transition */
+            pointer-events: none; /* Prevent interaction when hidden */
+        }
+        .dropdown-menu.show {
+            opacity: 1; /* Fully visible */
+            transform: translateY(0); /* Slide down to normal position */
+            pointer-events: auto; /* Allow interaction when visible */
+        }
+        body.dark-mode .dropdown-menu {
+            background-color: #34495e;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .dropdown-item {
+            font-size: 1rem;
+            color: #555;
+            display: inline-flex; /* Use inline-flex to limit width to content */
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            position: relative; /* For pseudo-element positioning */
+            transition: color 0.3s ease; /* Smooth color transition */
+            width: auto; /* Allow width to adjust to content */
+            margin: 0 auto; /* Center the item horizontally */
+            text-align: left; /* Align text left within the centered item */
+        }
+        body.dark-mode .dropdown-item {
+            color: #e0e0e0;
+        }
+        .dropdown-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%; /* Full width of content */
+            height: 100%;
+            background-color: transparent;
+            z-index: -1; /* Behind the text */
+            transition: background-color 0.3s ease; /* Smooth background transition */
+        }
+        .dropdown-item:hover {
+            color: #007bff;
+            border-radius: 5px;
+        }
+        .dropdown-item:hover::before {
+            background-color: #e3f2fd; /* Light blue highlight for "Your Profile" */
+            border-radius: 5px;
+        }
+        body.dark-mode .dropdown-item:hover::before {
+            background-color: #4a6a8a; /* Darker highlight for dark mode */
+        }
+        .dropdown-item.logout:hover {
+            color: #f41515;
+        }
+        .dropdown-item.logout:hover::before {
+            background-color: #f8d7da; /* Light red highlight for "Logout" */
+            border-radius: 5px;
+        }
+        body.dark-mode .dropdown-item.logout:hover::before {
+            background-color: #5a2e34; /* Darker red highlight for dark mode */
         }
         /* Desktop Adjustments */
         @media (min-width: 768px) {
@@ -81,7 +212,14 @@
                 background-color: #fff;
                 border-bottom: 1px solid #ddd;
                 z-index: 1000;
+                transition: background-color 0.3s ease;
             }
+
+            body.dark-mode .top-nav-desktop {
+                background-color: #2c3e50;
+                border-bottom: 1px solid #34495e;
+            }
+
             .top-nav-desktop .container {
                 display: flex;
                 justify-content: space-between;
@@ -135,9 +273,86 @@
                 font-weight: bold;
                 background-color: #e3f2fd; /* Match hover background for active link */
             }
-            .top-nav-desktop a.logout:hover {
-                color: #f41515;
-                background-color: #f8d7da;
+            body.dark-mode .top-nav-desktop a {
+                color: #e0e0e0;
+            }
+            body.dark-mode .top-nav-desktop a:hover {
+                background-color: #4a6a8a; /* Darker highlight for dark mode hover */
+            }
+            body.dark-mode .top-nav-desktop a.active {
+                background-color: #4a6a8a;
+            }
+            /* Profile button specific styling */
+            .top-nav-desktop .profile-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 140px;
+                height: 40px;
+                position: relative; /* Ensure proper positioning context */
+            }
+            .top-nav-desktop .profile-btn:hover {
+                transform: translateY(5px);
+            }
+            /* Fix dropdown toggle caret to remain visible on hover */
+            .top-nav-desktop .profile-btn.dropdown-toggle::after {
+                content: '';
+                display: inline-block;
+                width: 0;
+                height: 0;
+                margin-left: 5px;
+                vertical-align: middle;
+                border-top: 0.3em solid;
+                border-right: 0.3em solid transparent;
+                border-left: 0.3em solid transparent;
+                position: absolute;
+                right: 10px; /* Position the caret to the right */
+                top: 50%;
+                transform: translateY(-50%);
+                transition: none; /* Prevent transition to keep it static */
+            }
+            .top-nav-desktop .profile-btn:hover .text {
+                display: none; /* Hide text on hover */
+            }
+            .top-nav-desktop .profile-btn:hover .icon {
+                display: block; /* Show icon on hover */
+            }
+            /* Ensure caret remains visible and unaffected by text/icon hover changes */
+            .top-nav-desktop .profile-btn:hover::after {
+                display: inline-block; /* Keep caret visible */
+            }
+
+            /* Theme Toggle Button Styling */
+            .top-nav-desktop .theme-toggle-btn {
+                color: #555;
+                text-decoration: none;
+                font-size: 1rem;
+                padding: 10px 15px 10px 30px;
+                border-radius: 5px; /* Rounded corners for hover background */
+                transition: all 0.3s ease; /* Smooth transition for hover effects */
+                display: flex; /* Use flex to center content */
+                justify-content: center;
+                align-items: center;
+                width: 24px; /* Smaller width for icon-only button */
+                height: 24px; /* Fixed height to match other buttons */
+                position: relative; /* For pseudo-element positioning */
+                background: none;
+                border: none;
+            }
+            .top-nav-desktop .theme-toggle-btn i {
+                font-size: 1.5rem; /* Match icon size with other nav buttons */
+            }
+            .top-nav-desktop .theme-toggle-btn:hover {
+                color: #000000;
+                transform: translateY(5px); /* Move down by 10px on hover */
+            }
+            body.dark-mode .top-nav-desktop .theme-toggle-btn {
+                color: #e0e0e0;
+            }
+            body.dark-mode .top-nav-desktop .theme-toggle-btn:hover {
+                color: #f9ff42; /* Darker highlight for dark mode hover */
+                transform: translateY(-5px);
             }
         }
     </style>
@@ -169,6 +384,44 @@
                 .then(reg => console.log('Service Worker registered'))
                 .catch(err => console.log('Service Worker registration failed:', err));
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const equipmentSelect = document.getElementById('equipment');
+            if (equipmentSelect) {
+                new Choices(equipmentSelect, {
+                    removeItemButton: true,
+                    placeholderValue: 'Select equipments',
+                });
+            }
+
+            const body = document.body;
+            const toggleButtons = document.querySelectorAll('.theme-toggle-btn');
+
+            // Apply saved theme on page load
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                body.classList.toggle('dark-mode', savedTheme === 'dark');
+                toggleButtons.forEach(button => {
+                    button.innerHTML = savedTheme === 'dark' ?
+                        '<i class="bi bi-sun-fill me-2"></i>' :
+                        '<i class="bi bi-moon-fill me-2"></i>';
+                });
+            }
+
+            // Add event listeners to all toggle buttons
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    body.classList.toggle('dark-mode');
+                    const isDarkMode = body.classList.contains('dark-mode');
+                    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+                    toggleButtons.forEach(btn => {
+                        btn.innerHTML = isDarkMode ?
+                            '<i class="bi bi-sun-fill me-2"></i>' :
+                            '<i class="bi bi-moon-fill me-2"></i>';
+                    });
+                });
+            });
+        });
     </script>
 </head>
 <body>
@@ -191,28 +444,33 @@
                     <span class="text">Dashboard</span>
                     <i class="fa-solid fa-table-columns icon"></i>
                 </a>
-                <a href="{{ url_for('auth.logout') }}" class="logout {% if request.endpoint == 'auth.logout' %}active{% endif %}">
-                    <span class="text">Logout</span>
-                    <i class="bi bi-box-arrow-right icon" style="font-size: 1.5rem;"></i>
-                </a>
+                <div class="dropdown">
+                    <a href="#" class="profile-btn dropdown-toggle {% if request.endpoint in ['auth.profile', 'auth.logout'] %}active{% endif %}" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="text">Profile</span>
+                        <i class="fa-solid fa-user icon"></i>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                <i class="bi bi-person-lines-fill me-2"></i> Your Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item logout" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <button class="theme-toggle-btn">
+                        <i class="bi bi-moon-fill me-2"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
     {% endif %}
-
-    <!-- Top Navigation (Conditional) -->
-    <!-- {% if not hide_top_nav %}
-    <nav class="navbar navbar-light bg-light">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('reservation.dashboard') }}">HCMUT Study</a>
-            {% if session.user %}
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">Đăng xuất</a>
-            {% else %}
-                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-sm">Đăng nhập</a>
-            {% endif %}
-        </div>
-    </nav>
-    {% endif %} -->
 
     <!-- Main Content -->
     <div class="container">
@@ -223,21 +481,25 @@
     <!-- Bottom Navigation -->
     {% set hide_nav = hide_bottom_nav | default(False) %}
     {% if session.user and not hide_nav %}
-    <nav class="navbar fixed-bottom bg-white border-top shadow-sm bottom-nav" style="height: 80px;">
+    <nav class="navbar fixed-bottom border-top shadow-sm bottom-nav" style="height: 80px;">
         <div class="container d-flex justify-content-around align-items-center">
             {% if session.user.role == 'admin' %}
             <a href="{{ url_for('auth.report') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint == 'auth.report' %}text-primary{% else %}text-muted{% endif %}">
                 <i class="bi bi-bar-chart-line-fill" style="font-size: 1.5rem;"></i>
-                <small>Báo cáo</small>
+                <small>Report</small>
             </a>
             {% endif %}
             <a href="{{ url_for('reservation.dashboard') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint == 'reservation.dashboard' %}text-primary{% else %}text-muted{% endif %}">
                 <i class="bi bi-house-door-fill" style="font-size: 1.5rem;"></i>
-                <small>Bảng điều khiển</small>
+                <small>Dashboard</small>
             </a>
-            <a href="{{ url_for('auth.logout') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint == 'auth.logout' %}active{% endif %}">
-                <i class="bi bi-box-arrow-right" style="font-size: 1.5rem;"></i>
-                <small>Đăng xuất</small>
+            <a href="{{ url_for('auth.profile') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint in ['auth.profile', 'auth.logout'] %}active{% endif %}">
+                <i class="fa-solid fa-user" style="font-size: 1.5rem;"></i>
+                <small>Profile</small>
+            </a>
+            <a href="#" class="d-flex flex-column align-items-center theme-toggle-btn">
+                <i class="bi bi-moon-fill" style="font-size: 1.5rem;"></i>
+                <small></small>
             </a>
         </div>
     </nav>
@@ -245,14 +507,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-          const equipmentSelect = document.getElementById('equipment');
-          new Choices(equipmentSelect, {
-            removeItemButton: true,
-            placeholderValue: 'Select equipments',
-          });
-        });
-      </script>
 </body> 
 </html>

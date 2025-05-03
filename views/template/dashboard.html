@@ -14,6 +14,7 @@
     }
     .filter-form {
         margin-bottom: 20px;
+        background-color: #fff; /* Default background for filter form */
     }
     .space-card {
         height: 100%;
@@ -151,7 +152,6 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         .filter-form {
-            background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
@@ -241,13 +241,75 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
     }
+
+    /* Dark Mode Styles */
+    body.dark-mode .dashboard-container {
+        background-color: #2c3e50; /* Darker background for content area */
+    }
+    body.dark-mode .filter-form {
+        background-color: #34495e; /* Darker background for filter form */
+    }
+    body.dark-mode .space-card {
+        background-color: #34495e; /* Darker card background */
+    }
+    body.dark-mode .space-card .card-title,
+    body.dark-mode .space-card .card-text,
+    body.dark-mode .filter-form .form-label,
+    body.dark-mode .choices__list--dropdown .choices__item--selectable,
+    body.dark-mode .choices__list--multiple .choices__item {
+        color: #e0e0e0; /* Light text for readability */
+    }
+    body.dark-mode .filter-form .form-control,
+    body.dark-mode .choices__inner {
+        background-color: #2c3e50; /* Dark input background */
+        border-color: #4a6a8a; /* Darker border */
+        color: #e0e0e0; /* Light text */
+    }
+    body.dark-mode .filter-form .form-control:focus {
+        border-color: #4f80ff; /* Lighter blue for focus in dark mode */
+        box-shadow: 0 0 5px rgba(79, 128, 255, 0.3);
+    }
+    body.dark-mode .filter-form .form-control::placeholder {
+        color: #b0b0b0; /* Lighter gray for placeholder in dark mode */
+    }
+    body.dark-mode .choices__list--multiple .choices__item {
+        background-color: #2c3e50; /* Darker badge background */
+        border-color: #4a6a8a; /* Darker badge border */
+        color: #e0e0e0; /* Light text */
+    }
+    body.dark-mode .choices__list--dropdown {
+        background-color: #34495e; /* Darker dropdown background */
+        border-color: #4a6a8a; /* Darker border */
+    }
+    body.dark-mode .choices__list--dropdown .choices__item--selectable.is-highlighted {
+        background-color: #4a6a8a; /* Darker hover highlight */
+        color: #e0e0e0; /* Light text */
+    }
+    body.dark-mode .space-card .badge {
+        background-color: #2c3e50; /* Dark badge background */
+        border-color: #4a6a8a; /* Darker badge border */
+        color: #e0e0e0; /* Light text */
+    }
+    body.dark-mode .button-resize:hover {
+        background-color: #4f80ff; /* Lighter blue in dark mode */
+    }
+    body.dark-mode .button-resize.btn-outline-secondary:hover {
+        background-color: #dc3545; /* Keep red for Clear button */
+        color: #fff; /* White text for contrast */
+    }
+    body.dark-mode .button-eff:hover {
+        background-color: #dc3545; /* Dark mode hover for auto-cancel */
+    }
+    body.dark-mode .space-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Darker shadow in dark mode */
+    }
 </style>
 <br>
 <div class="dashboard-container">
     <div class="mb-4 filter-form">
         <h2 class="fw-bold">Dashboard</h2>
         <br>
-        <form method="GET" class="bg-white p-3 rounded shadow-sm">
+        <form method="GET" class="p-3 rounded shadow-sm">
             <div class="row">
                 <div class="col-md-6 mb-2">
                     <label for="time" class="form-label">

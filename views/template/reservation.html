@@ -8,7 +8,7 @@
   <div class="d-flex flex-column align-items-center" style="padding: 20px;">
     <h1 class="fw-bold mb-4">Room Reservation</h1>
 
-    <div class="w-100 mb-3 p-3 bg-white rounded shadow-sm">
+    <div class="w-100 mb-3 p-3 rounded shadow-sm">
       <div class="text-center fw-bold mb-2">Room {{ space.roomID }}</div>
       <div class="d-flex justify-content-center gap-2">
         <button type="button" class="btn btn-sm {% if space.type == 'individual' %}btn-primary{% else %}btn-outline-primary{% endif %}" disabled>Private Room</button>
@@ -17,13 +17,13 @@
     </div>
 
     <form method="POST" class="w-100">
-      <div class="w-100 mb-3 p-3 bg-white rounded shadow-sm">
+      <div class="w-100 mb-3 p-3 rounded shadow-sm">
         <div class="fw-semibold mb-2">Time</div>
-        <input type="datetime-local" class="form-control text-center bg-light" name="time" required
+        <input type="datetime-local" class="form-control text-center" name="time" required
                value="{{ request.args.get('time', '') }}">
       </div>
 
-      <div class="w-100 mb-4 p-3 bg-white rounded shadow-sm">
+      <div class="w-100 mb-4 p-3 rounded shadow-sm">
         <div class="fw-semibold mb-2">Status</div>
         <div class="status-indicator text-center">
           <span class="badge {% if space.status == 'available' %}bg-success{% else %}bg-danger{% endif %} text-white">
@@ -90,7 +90,73 @@
   .book-now-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    background-color: #007bff; /* Slightly darker shade of #4f80ff */
+    background-color: #0056b3; /* Slightly darker shade of #007bff */
+  }
+
+  /* Dark Mode Adjustments */
+  body.dark-mode .reserv-container {
+    background-color: #2c3e50; /* Dark background matching base.html */
+  }
+
+  body.dark-mode .reserv-container h1,
+  body.dark-mode .reserv-container .fw-semibold,
+  body.dark-mode .reserv-container .text-center {
+    color: #e0e0e0; /* Light text for readability */
+  }
+
+  body.dark-mode .reserv-container .bg-white {
+    background-color: #34495e; /* Darker background for content boxes */
+    border: 1px solid #405d78; /* Subtle border for contrast */
+  }
+
+  body.dark-mode .reserv-container .btn-primary {
+    background-color: #4f80ff; /* Dark mode blue for primary buttons */
+    border-color: #4f80ff;
+    color: #fff;
+  }
+
+  body.dark-mode .reserv-container .btn-primary:hover {
+    background-color: #4066cc; /* Darker shade for hover */
+    border-color: #4066cc;
+  }
+
+  body.dark-mode .reserv-container .btn-outline-primary {
+    color: #4f80ff; /* Dark mode outline color */
+    border-color: #4f80ff;
+  }
+
+  body.dark-mode .reserv-container .btn-outline-primary:hover {
+    background-color: #4f80ff; /* Fill on hover */
+    color: #fff;
+  }
+
+  body.dark-mode .reserv-container .form-control {
+    background-color: #2c3e50; /* Dark background for inputs */
+    color: #e0e0e0; /* Light text for inputs */
+    border: 1px solid #405d78; /* Subtle border */
+  }
+
+  body.dark-mode .reserv-container .form-control:focus {
+    background-color: #34495e; /* Slightly lighter on focus */
+    border-color: #4f80ff; /* Focus border color */
+    color: #e0e0e0;
+  }
+
+  body.dark-mode .status-indicator .badge.bg-success {
+    background-color: #28a745; /* Green for available */
+  }
+
+  body.dark-mode .status-indicator .badge.bg-danger {
+    background-color: #dc3545; /* Red for unavailable */
+  }
+
+  body.dark-mode .book-now-btn {
+    background-color: #4f80ff; /* Dark mode primary color */
+  }
+
+  body.dark-mode .book-now-btn:hover {
+    background-color: #4066cc; /* Darker shade for hover */
+    box-shadow: 0 4px 15px rgba(79, 128, 255, 0.4); /* Adjusted shadow for dark mode */
   }
 
   /* Desktop Layout (Screen width >= 768px) */
@@ -131,6 +197,16 @@
     .status-indicator .badge {
       font-size: 1.1rem;
       padding: 10px 20px;
+    }
+
+    /* Dark Mode Adjustments for Desktop */
+    body.dark-mode {
+      background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%); /* Dark gradient for desktop */
+    }
+
+    body.dark-mode .reserv-container {
+      background-color: #34495e; /* Darker container background */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Darker shadow */
     }
   }
 </style>

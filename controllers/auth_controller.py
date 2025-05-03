@@ -31,6 +31,9 @@ def logout():
         return redirect(url_for('auth.login'))
     return render_template('logout.html')
 
+@auth_bp.route('/profile')
+def profile():
+    return render_template('profile.html', user=session['user'])
 
 @auth_bp.route('/report')
 def report():
