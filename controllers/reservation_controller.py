@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
-from models.study_space import Room, DateTimeRange
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
+from models.study_space import Room
 from models.user import User, Student
 from models.reservation import Booking
 
@@ -17,11 +17,11 @@ def dashboard():
         start = time_filter
         from datetime import datetime, timedelta
         end = (datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M')
-        criteria['timeSlot'] = DateTimeRange(start, end)
+        criteria['timeSlot'] = {'startTime': start, 'endTime': end}
     if capacity:
         criteria['capacity'] = int(capacity)
     if equipment:
-        criteria['equipment'] = [equipment]  # Add equipment to criteria
+        criteria['equipment'] = [equipment]
     user = User.find_by_id(session['user']['id'])
     if isinstance(user, Student):
         rooms = user.searchRoom(criteria)
@@ -45,32 +45,47 @@ def reserve_space(space_id):
         if not end_time:
             from datetime import datetime, timedelta
             end_time = (datetime.strptime(start_time, '%Y-%m-%d %H:%M') + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M')
-        time_slot = DateTimeRange(start_time, end_time)
+        time_slot = {'startTime': start_time, 'endTime': end_time}
         user = User.find_by_id(session['user']['id'])
         if isinstance(user, Student):
             booking = user.bookRoom(space, time_slot)
             if booking:
-                space.status = 'reserved'  # Update status
-                space.timeSlot = time_slot  # Temporarily store for display (in a real app, fetch from Booking)
+                space.status = 'reserved'
+                space.timeSlot = time_slot
                 return redirect(url_for('reservation.success'))
         return "Booking failed", 400
     return render_template('reservation.html', space=space)
 
-@reservation_bp.route('/cancel/<space_id>', methods=['POST'])
+@reservation_bp.route('/cancel/<space_id>', methods=['GET', 'POST'])
 def cancel_reservation(space_id):
     if 'user' not in session:
         return redirect(url_for('auth.login'))
     space = Room.find_by_id(space_id)
-    if not space or space.status != 'reserved':
-        return "Cannot cancel", 404
-    user = User.find_by_id(session['user']['id'])
-    if isinstance(user, Student):
-        booking = next((b for b in user.bookings if b.room.roomID == space_id and b.status == "pending"), None)
-        if booking:
-            user.cancelBooking(booking.bookingID)
-            space.status = 'available'
-            space.timeSlot = None
-    return redirect(url_for('reservation.dashboard'))
+    if not space:
+        return jsonify({'error': 'Không tìm thấy phòng.'}), 404
+
+    if request.method == 'GET':
+        user = User.find_by_id(session['user']['id'])
+        if not isinstance(user, Student):
+            return jsonify({'error': 'Chỉ sinh viên có thể hủy đặt phòng.'}), 403
+        booking = next((b for b in user.bookings if b.room.roomID == space_id and b.status == "confirmed"), None)
+        if not booking:
+            return jsonify({'error': 'Không tìm thấy đặt phòng để hủy.'}), 404
+        return render_template('cancel.html', space=space, booking=booking)
+
+    if request.method == 'POST':
+        user = User.find_by_id(session['user']['id'])
+        if not isinstance(user, Student):
+            return jsonify({'error': 'Chỉ sinh viên có thể hủy đặt phòng.'}), 403
+        booking = next((b for b in user.bookings if b.room.roomID == space_id and b.status == "confirmed"), None)
+        if not booking:
+            return jsonify({'error': 'Không tìm thấy đặt phòng để hủy.'}), 404
+        if booking.status != 'confirmed':
+            return jsonify({'error': 'Đặt phòng này không thể hủy.'}), 400
+        user.cancelBooking(booking.bookingID)
+        space.status = 'available'
+        space.timeSlot = None
+        return jsonify({'message': 'Hủy đặt phòng thành công!'}), 200
 
 @reservation_bp.route('/checkin/<space_id>', methods=['GET', 'POST'])
 def checkin(space_id):
@@ -95,7 +110,7 @@ def success():
 
 @reservation_bp.route('/auto_cancel')
 def auto_cancel():
-    if 'user' not in session or session['user']['role'] != 'admin':  # Fixed role to 'admin'
+    if 'user' not in session or session['user']['role'] != 'admin':
         return redirect(url_for('auth.login'))
     from datetime import datetime
     for booking in Booking.all():

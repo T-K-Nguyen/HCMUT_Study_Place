@@ -1,5 +1,6 @@
 from datetime import datetime
 from models.study_space import DateTimeRange
+from models.room_schedule import RoomSchedule
 
 class Booking:
     _bookings = []  # In-memory storage
@@ -34,6 +35,8 @@ class Booking:
         schedule = next((s for s in RoomSchedule.all() if s.room == self.room and s.startTime == self.timeSlot.startTime), None)
         if schedule:
             schedule.status = "canceled"
+        if self in Booking._bookings:
+            Booking._bookings.remove(self)
 
     def save(self):
         if self not in Booking._bookings:
