@@ -1,4 +1,50 @@
 [
-    {"id": 1, "name": "Room A1", "type": "individual", "status": "available", "equipment": ["whiteboard"]},
-    {"id": 2, "name": "Room B2", "type": "group", "status": "available", "equipment": ["projector", "AC"]}
+    {
+        "roomID": "P.101",
+        "type": "individual",
+        "capacity": 2,
+        "equipment": [
+            "M\u00e1y chi\u1ebfu",
+            "\u0110i\u1ec1u h\u00f2a"
+        ],
+        "status": "in_use",
+        "location": "Building A",
+        "timeSlot": null
+    },
+    {
+        "roomID": "P.102",
+        "type": "group",
+        "capacity": 6,
+        "equipment": [
+            "Projector",
+            "Air Conditioner"
+        ],
+        "status": "available",
+        "location": "Building B",
+        "timeSlot": null
+    },
+    {
+        "roomID": "P.103",
+        "type": "individual",
+        "capacity": 2,
+        "equipment": [
+            "Projector",
+            "Air Conditioner"
+        ],
+        "status": "available",
+        "location": "Building A",
+        "timeSlot": null
+    },
+    {
+        "roomID": "P.104",
+        "type": "group",
+        "capacity": 6,
+        "equipment": [
+            "Projector",
+            "Air Conditioner"
+        ],
+        "status": "available",
+        "location": "Building B",
+        "timeSlot": null
+    }
 ]
