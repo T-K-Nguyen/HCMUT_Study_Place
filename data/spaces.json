@@ -10,8 +10,8 @@
         "status": "reserved",
         "location": "Building A",
         "timeSlot": {
-            "startTime": "2025-05-08 17:13",
-            "endTime": "2025-05-08 18:13"
+            "startTime": "2025-05-08 17:33",
+            "endTime": "2025-05-08 18:33"
         }
     },
     {
@@ -25,8 +25,8 @@
         "status": "available",
         "location": "Building B",
         "timeSlot": {
-            "startTime": "2025-05-08 17:03",
-            "endTime": "2025-05-08 18:03"
+            "startTime": "2025-05-08 17:18",
+            "endTime": "2025-05-08 18:18"
         }
     },
     {
@@ -40,8 +40,8 @@
         "status": "available",
         "location": "Building A",
         "timeSlot": {
-            "startTime": "2025-05-08 17:09",
-            "endTime": "2025-05-08 18:09"
+            "startTime": "2025-05-07 17:22",
+            "endTime": "2025-05-07 18:22"
         }
     },
     {
