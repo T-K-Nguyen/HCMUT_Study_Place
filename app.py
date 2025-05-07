@@ -5,38 +5,45 @@ from controllers.iot_controller import iot_bp
 from models.user import Student, Admin
 from models.study_space import Room
 from models.iot_device import IoTDevice
+from models.reservation import Booking
+from models.room_schedule import RoomSchedule
+from datetime import datetime, timedelta
 
 app = Flask(__name__, template_folder='views/template', static_folder='views/static')
 app.secret_key = 's3mrs_demo'  # Required for session management
 
 # Register blueprints for controllers
-app.register_blueprint(auth_bp)
-app.register_blueprint(reservation_bp)
-app.register_blueprint(iot_bp)
+app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(reservation_bp, url_prefix='/')
+app.register_blueprint(iot_bp, url_prefix='/iot')
 
-
-# Initialize sample data (as per your original setup)
+# Initialize sample data
 def init_data():
     # Create sample users
     Student("1", "Student One", "student1@hcmut.edu.vn")
     Admin("2", "Admin One", "admin1@hcmut.edu.vn")
 
     # Create sample rooms with equipment
-    Room("P.101", "individual", 2, ["Máy chiếu", "Điều hòa"], "reserved", "Building A")
-    Room("P.102", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
-    Room("P.103", "individual", 2, ["Máy chiếu", "Điều hòa"], "available", "Building A")
-    Room("P.104", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
-    # IoTDevice("AC", "P.101","ok")
+    room1 = Room("P.101", "individual", 2, ["Máy chiếu", "Điều hòa"], "reserved", "Building A")
+    room2 = Room("P.102", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
+    room3 = Room("P.103", "individual", 2, ["Máy chiếu", "Điều hòa"], "available", "Building A")
+    room4 = Room("P.104", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
+
+    # Create sample bookings for testing
+    start_time = datetime.now() + timedelta(hours=1)
+    end_time = start_time + timedelta(hours=1)
+    student = Student.find_by_id("1")
+    booking = Booking("1", student, room1, {"startTime": start_time, "endTime": end_time})
+    booking.confirm()
+    IoTDevice("AC", "P.101", "ok")
+
 # Initialize data on app startup
 init_data()
-
 
 # Root route to redirect to login
 @app.route('/')
 def index():
     return redirect(url_for('auth.login'))
 
-
 if __name__ == '__main__':
-    # Run the app on host '0.0.0.0' to be accessible on the local network
     app.run(host='0.0.0.0', port=5000, debug=True)
