@@ -60,52 +60,13 @@ def reserve_space(space_id):
         user = User.find_by_id(session['user']['id'])
         booking = user.bookRoom(space, time_slot)
         if booking:
-            space.status = 'reserved'
-            space.timeSlot = time_slot
+            space.updateStatus('reserved')
+            space.updateTimeSlot(time_slot)
             booking.confirm()
-            from models import db  # Import your database session (e.g., SQLAlchemy)
-            db.session.commit()  # Commit changes to the database
             return redirect(url_for('reservation.success'))
         return render_template('error.html', message="Đặt phòng thất bại. Vui lòng thử lại."), 400
 
     return render_template('reservation.html', space=space)
-# @reservation_bp.route('/reserve/<space_id>', methods=['GET', 'POST'])
-# def reserve_space(space_id):
-#     if 'user' not in session or 'id' not in session['user']:
-#         return redirect(url_for('auth.login'))
-#
-#     space = Room.find_by_id(space_id)
-#     if not space:
-#         return render_template('error.html', message="Phòng không tồn tại."), 404
-#
-#     if request.method == 'POST':
-#         if space.status != 'available':
-#             return render_template('error.html', message="Phòng đã được đặt trước."), 400
-#
-#         try:
-#             time = request.form['time']
-#             room_type = request.form['room_type']
-#         except KeyError as e:
-#             return render_template('error.html', message=f"Thiếu thông tin: {str(e)}."), 400
-#
-#         try:
-#             start_dt = datetime.strptime(time, '%Y-%m-%dT%H:%M')
-#             end_dt = start_dt + timedelta(hours=1)
-#         except ValueError as e:
-#             return render_template('error.html',
-#                                    message="Định dạng thời gian không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DDThh:mm."), 400
-#
-#         time_slot = DateTimeRange(start_dt, end_dt)
-#         user = User.find_by_id(session['user']['id'])
-#         booking = user.bookRoom(space, time_slot)
-#         if booking:
-#             space.status = 'reserved'
-#             space.timeSlot = time_slot
-#             booking.confirm()
-#             return redirect(url_for('reservation.success'))
-#         return render_template('error.html', message="Đặt phòng thất bại. Vui lòng thử lại."), 400
-#
-#     return render_template('reservation.html', space=space)
 
 
 @reservation_bp.route('/cancel/<space_id>', methods=['GET', 'POST'])
@@ -140,6 +101,70 @@ def cancel_reservation(space_id):
         return jsonify({'message': 'Hủy đặt phòng thành công!'}), 200
 
 
+# @reservation_bp.route('/checkin/<space_id>', methods=['GET', 'POST'])
+# def checkin(space_id):
+#     if 'user' not in session:
+#         return redirect(url_for('auth.login'))
+#     space = Room.find_by_id(space_id)
+#     if not space or space.status != 'reserved':
+#         return render_template('error.html', message="Không thể check-in. Phòng không tồn tại hoặc chưa được đặt."), 404
+#
+#     user = User.find_by_id(session['user']['id'])
+#     if not isinstance(user, Student):
+#         return render_template('error.html', message="Chỉ sinh viên có thể check-in."), 403
+#
+#     # Find the booking for this space
+#     booking = next((b for b in user.bookings if b.room.roomID == space_id and b.status == "confirmed"), None)
+#     if not booking:
+#         return render_template('error.html', message="Không tìm thấy đặt phòng để check-in."), 404
+#
+#     if request.method == 'POST':
+#         if request.is_json:
+#             data = request.get_json()
+#             qr_code = data.get('qr_code')
+#         else:
+#             qr_code = request.form.get('qr_code')
+#
+#         if not qr_code:
+#             return jsonify({'error': 'Mã QR không được cung cấp.'}), 400
+#
+#         if user.checkIn(qr_code):
+#             return jsonify({'message': 'Check-in thành công!', 'redirect': url_for('reservation.dashboard')}), 200
+#         return jsonify({'error': 'Mã QR không hợp lệ.'}), 400
+#
+#     return render_template('checkin.html', space=space, booking=booking, message=None, error=None)
+
+@reservation_bp.route('/checkin_page/<space_id>')
+def checkin_page(space_id):
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+
+    space = Room.find_by_id(space_id)
+    if not space:
+        return render_template('error.html', message="Phòng không tồn tại."), 404
+
+    user = User.find_by_id(session['user']['id'])
+    if not isinstance(user, Student):
+        return render_template('error.html', message="Chỉ sinh viên có thể check-in."), 403
+
+    booking = next((b for b in user.bookings if b.room.roomID == space_id and b.status == "confirmed"), None)
+    if not booking:
+        return render_template('error.html', message="Không tìm thấy đặt phòng để check-in."), 404
+
+    if booking.student.userID != user.userID:
+        return render_template('error.html', message="Bạn không có quyền check-in cho đặt phòng này."), 403
+
+    space_data = {
+        'roomID': space.id,  # Adjust to match Room's attribute
+        'capacity': space.capacity,
+        'status': space.status,
+        'equipment': space.equipment,
+        'timeslot': space.timeSlot.startTime.strftime('%Y-%m-%dT%H:%M') if space.timeSlot else None,
+        'reserved_by': booking.student.email,
+        'qr_code': booking.qrCode
+    }
+    return render_template('checkin.html', space=space_data)
+
 @reservation_bp.route('/checkin/<space_id>', methods=['GET', 'POST'])
 def checkin(space_id):
     if 'user' not in session:
@@ -157,6 +182,9 @@ def checkin(space_id):
     if not booking:
         return render_template('error.html', message="Không tìm thấy đặt phòng để check-in."), 404
 
+    if booking.student.userID != user.userID:
+        return render_template('error.html', message="Bạn không có quyền check-in cho đặt phòng này."), 403
+
     if request.method == 'POST':
         if request.is_json:
             data = request.get_json()
@@ -167,12 +195,16 @@ def checkin(space_id):
         if not qr_code:
             return jsonify({'error': 'Mã QR không được cung cấp.'}), 400
 
-        if user.checkIn(qr_code):
-            return jsonify({'message': 'Check-in thành công!', 'redirect': url_for('reservation.dashboard')}), 200
+        if qr_code == booking.qrCode:
+            if user.checkIn(qr_code):
+                space.status = 'available'
+                space.timeSlot = None
+                booking.status = "completed"
+                return jsonify({'message': 'Check-in thành công!', 'redirect': url_for('reservation.dashboard')}), 200
+            return jsonify({'error': 'Check-in thất bại. Vui lòng thử lại.'}), 400
         return jsonify({'error': 'Mã QR không hợp lệ.'}), 400
 
     return render_template('checkin.html', space=space, booking=booking, message=None, error=None)
-
 @reservation_bp.route('/success')
 def success():
     return render_template('success.html', message="Reservation successful. QR code sent to email.")

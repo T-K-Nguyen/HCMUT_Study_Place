@@ -17,7 +17,7 @@ class Booking:
 
     def confirm(self):
         self.status = "confirmed"
-        self.room.updateStatus("in_use")
+        #self.room.updateStatus("reserved")
         from models.room_schedule import RoomSchedule
         schedule = RoomSchedule(
             scheduleID=str(len(RoomSchedule.all()) + 1),

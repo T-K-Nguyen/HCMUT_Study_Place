@@ -25,23 +25,35 @@ class Room:
     _data_file = 'data/spaces.json'  # Path to the JSON file
 
     def __init__(self, roomID, type, capacity, equipment=None, status="available", location="", timeSlot=None):
+
         self.roomID = roomID
         self.type = type
         self.capacity = capacity
         self.equipment = equipment or []
         self.status = status
         self.location = location
-        self.timeSlot = timeSlot  # Add timeSlot attribute
+        self.timeSlot = timeSlot
         # Check for duplicate roomID before creating a new room
         if self.find_by_id(roomID):
             return
         Room._rooms.append(self)
         self.save_to_file()  # Save to file whenever a new room is created
 
+    def updateType(self, newType):
+        self.type = newType
+        self.save_to_file()  # Save to file whenever the status is updated
     def updateStatus(self, newStatus):
         self.status = newStatus
         self.save_to_file()  # Save to file whenever the status is updated
-
+    def updateCapacity(self, newcapacity):
+        self.capacity = newcapacity
+        self.save_to_file()  # Save to file whenever the status is updated
+    def updateEquipment(self, newEquipment):
+        self.equipment = newEquipment
+        self.save_to_file()  # Save to file whenever the status is updated
+    def updateLocation(self, newloc):
+        self.location = newloc
+        self.save_to_file()  # Save to file whenever the status is updated
     def updateTimeSlot(self, timeSlot):
         self.timeSlot = timeSlot
         self.save_to_file()  # Save to file whenever the time slot is updated

@@ -4,12 +4,15 @@
         "type": "individual",
         "capacity": 2,
         "equipment": [
-            "M\u00e1y chi\u1ebfu",
-            "\u0110i\u1ec1u h\u00f2a"
+            "Projector",
+            "Air Conditioner"
         ],
-        "status": "in_use",
+        "status": "reserved",
         "location": "Building A",
-        "timeSlot": null
+        "timeSlot": {
+            "startTime": "2025-05-08 16:45",
+            "endTime": "2025-05-08 17:45"
+        }
     },
     {
         "roomID": "P.102",
@@ -21,7 +24,10 @@
         ],
         "status": "available",
         "location": "Building B",
-        "timeSlot": null
+        "timeSlot": {
+            "startTime": "2025-05-08 16:38",
+            "endTime": "2025-05-08 17:38"
+        }
     },
     {
         "roomID": "P.103",
@@ -33,7 +39,10 @@
         ],
         "status": "available",
         "location": "Building A",
-        "timeSlot": null
+        "timeSlot": {
+            "startTime": "2025-05-08 16:41",
+            "endTime": "2025-05-08 17:41"
+        }
     },
     {
         "roomID": "P.104",
@@ -45,6 +54,9 @@
         ],
         "status": "available",
         "location": "Building B",
-        "timeSlot": null
+        "timeSlot": {
+            "startTime": "2025-05-08 16:43",
+            "endTime": "2025-05-08 17:43"
+        }
     }
 ]
