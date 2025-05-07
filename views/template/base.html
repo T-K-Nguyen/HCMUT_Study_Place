@@ -94,7 +94,7 @@
             margin-bottom: 2px; /* Consistent spacing between icon and text */
         }
         .bottom-nav a small {
-            line-height: 1; /* Ensure text aligns tightly */
+            line-height: 2; /* Ensure text aligns tightly */
             margin: 0;
             padding: 0;
         }
@@ -110,6 +110,7 @@
             align-items: center;
             justify-content: center;
             width: 20%; /* Equal width for all items */
+            margin-bottom: 15px;
         }
         body.dark-mode .bottom-nav .theme-toggle-btn {
             color: #e0e0e0;
@@ -429,7 +430,7 @@
     {% if session.user %}
     <nav class="top-nav-desktop">
         <div class="container">
-            <a href="{{ url_for('reservation.dashboard') }}" class="navbar-brand">
+            <a href="{{ url_for('auth.home') }}" class="navbar-brand">
                 <img src="{{ url_for('static', filename='hcmut_logo.png') }}" alt="HCMUT Logo">
                 <span class="text">HCMUT Study</span>
             </a>
@@ -484,17 +485,21 @@
     <nav class="navbar fixed-bottom border-top shadow-sm bottom-nav" style="height: 80px;">
         <div class="container d-flex justify-content-around align-items-center">
             {% if session.user.role == 'admin' %}
-            <a href="{{ url_for('auth.report') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint == 'auth.report' %}text-primary{% else %}text-muted{% endif %}">
-                <i class="bi bi-bar-chart-line-fill" style="font-size: 1.5rem;"></i>
+            <a href="{{ url_for('auth.report') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint == 'auth.report' %}text-primary{% else %}{% endif %}">
+                <i class="fa-solid fa-chart-line"></i>
                 <small>Report</small>
             </a>
             {% endif %}
-            <a href="{{ url_for('reservation.dashboard') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint == 'reservation.dashboard' %}text-primary{% else %}text-muted{% endif %}">
-                <i class="bi bi-house-door-fill" style="font-size: 1.5rem;"></i>
+            <a href="{{ url_for('reservation.dashboard') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint == 'reservation.dashboard' %}text-primary{% else %}{% endif %}">
+                <i class="fa-solid fa-table-columns"></i>
                 <small>Dashboard</small>
             </a>
+            <a href="{{ url_for('auth.home') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint in ['auth.home', 'auth.logout'] %}active{% endif %}">
+                <i class="fa-solid fa-house"></i>
+                <small>Home</small>
+
             <a href="{{ url_for('auth.profile') }}" class="d-flex flex-column align-items-center text-decoration-none {% if request.endpoint in ['auth.profile', 'auth.logout'] %}active{% endif %}">
-                <i class="fa-solid fa-user" style="font-size: 1.5rem;"></i>
+                <i class="fa-solid fa-user"></i>
                 <small>Profile</small>
             </a>
             <a href="#" class="d-flex flex-column align-items-center theme-toggle-btn">

@@ -36,10 +36,6 @@ init_data()
 def index():
     return redirect(url_for('auth.login'))
 
-@app.route('/logout', methods=['GET', 'POST'])
-def logout():
-    return render_template('logout.html', hide_bottom_nav=True)
-
 
 if __name__ == '__main__':
     # Run the app on host '0.0.0.0' to be accessible on the local network

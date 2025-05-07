@@ -7,6 +7,11 @@ from datetime import datetime
 
 auth_bp = Blueprint('auth', __name__)
 
+@auth_bp.route('/')
+def home():
+    if 'user' not in session:  # Check if user is not logged in
+        return redirect(url_for('auth.login'))  # Redirect to login page
+    return render_template('home.html', now=datetime.now())
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -15,7 +20,7 @@ def login():
         user = User.find_by_id(user_id)
         if user and user.login():
             session['user'] = {'id': user.userID, 'name': user.name, 'role': user.role}
-            return redirect(url_for('reservation.dashboard'))
+            return redirect(url_for('auth.home'))
         return render_template('login.html', error="Thông tin không hợp lệ")
     return render_template('login.html')
 
