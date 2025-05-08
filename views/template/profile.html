@@ -1,179 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Profile - HCMUT Study{% endblock %}
 {% block content %}
-<div class="full-page-content">
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-8 col-lg-6">
-            <!-- User Info Section -->
-            <div class="card mb-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.8);">
-                <div class="card-body py-4">
-                    <h2 class="text-center mb-4">User Profile</h2>
-                    <!-- Profile Picture -->
-                    <div class="text-center mb-4">
-                        <img src="{{ url_for('static', filename='default-profile.jpg') }}" alt="Profile Picture" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
-                    </div>
-                    <h5 class="card-title mb-3">Personal Information</h5>
-                    <p class="mb-2"><strong>Name:</strong> {{ user.name }}</p>
-                    <p class="mb-2"><strong>Email:</strong> {{ user.email if user.email else 'Not provided' }}</p>
-                    <p class="mb-3"><strong>Role:</strong> {{ user.role }}</p>
-                    <!-- Settings Link -->
-                    <div class="text-center">
-                        <a class="dropdown-item edit-btn" href="">
-                            <i class="bi bi-pencil me-2"></i> Edit Profile
-                        </a>
-                        <a class="dropdown-item logout" href="{{ url_for('auth.logout') }}">
-                            <i class="bi bi-box-arrow-right me-2"></i> Logout
-                        </a>
+<body class="profile-body">
+    <div class="full-page-content">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+                <!-- User Info Section -->
+                <div class="card mb-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.8);">
+                    <div class="card-body py-4">
+                        <h2 class="text-center mb-4 profile">User Profile</h2>
+                        <!-- Profile Picture -->
+                        <div class="text-center mb-4">
+                            <img src="{{ url_for('static', filename='default-profile.jpg') }}" alt="Profile Picture" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                        </div>
+                        <h5 class="card-title mb-3">Personal Information</h5>
+                        <p class="mb-2"><strong>Name:</strong> {{ user.name }}</p>
+                        <p class="mb-2"><strong>Email:</strong> {{ user.email if user.email else 'Not provided' }}</p>
+                        <p class="mb-3"><strong>Role:</strong> {{ user.role }}</p>
+                        <!-- Settings Link -->
+                        <div class="text-center">
+                            <a class="dropdown-item edit-btn" href="">
+                                <i class="bi bi-pencil me-2"></i> Edit Profile
+                            </a>
+                            <a class="dropdown-item logout" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<style>
-    body {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* Full-page gradient background */
-        background-repeat: no-repeat;
-        background-attachment: fixed; /* Keeps background fixed while scrolling */
-        margin: 0; /* Remove default margins */
-        padding: 0; /* Remove default padding */
-        min-height: 100vh; /* Ensure the body takes up the full viewport height */
-        overflow: hidden; /* Allow scrolling if content overflows */
-    }
-
-    .full-page-content {
-        min-height: 100vh; /* Ensure content spans the full height */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 20px; /* Add padding for smaller screens */
-    }
-
-    .card {
-        border: none; /* Remove default card border */
-    }
-
-    /* Match dropdown-item styling from base.html */
-    .card .dropdown-item {
-        font-size: 1rem;
-        color: #555;
-        display: inline-flex; /* Use inline-flex to limit width to content */
-        align-items: center;
-        gap: 8px;
-        padding: 8px 15px;
-        position: relative; /* For pseudo-element positioning */
-        transition: color 0.3s ease, transform 0.3s ease; /* Add transform transition */
-        width: auto; /* Allow width to adjust to content */
-        margin: 10px auto; /* Center the item horizontally with some margin */
-        text-align: left; /* Align text left within the centered item */
-        text-decoration: none; /* Remove underline */
-    }
-
-    .card .dropdown-item::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100%; /* Full width of content */
-        height: 100%;
-        background-color: transparent;
-        z-index: -1; /* Behind the text */
-        transition: background-color 0.3s ease; /* Smooth background transition */
-        border-radius: 5px;
-    }
-
-    .card .dropdown-item:hover {
-        color: #007bff;
-        border-radius: 5px;
-    }
-
-    .card .dropdown-item:hover::before {
-        background-color: #e3f2fd; /* Light blue highlight for default hover */
-        border-radius: 5px;
-    }
-
-    .card .dropdown-item.logout:hover {
-        color: #f41515; /* Red color on logout hover */
-    }
-
-    .card .dropdown-item.logout:hover::before {
-        background-color: #f8d7da; /* Light red highlight for logout hover */
-        border-radius: 5px;
-    }
-
-    .card .dropdown-item.logout:hover {
-        transform: translateY(5px); /* Shift down by 5px on hover */
-    }
-
-    /* Edit Button Styling */
-    .edit-btn {
-        max-width: 150px; /* Limit the width of the button */
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .edit-btn:hover {
-        color: #fff; /* White text on hover */
-        border-radius: 5px;
-    }
-
-    .edit-btn:hover::before {
-        background-color: #e3f2fd; /* Blue highlight for hover */
-        border-radius: 5px;
-    }
-
-    .edit-btn:hover {
-        transform: translateY(5px); /* Shift down by 5px on hover, matching logout */
-    }
-
-    @media (min-width: 768px) {
-        .report-container {
-            max-width: 900px; /* Limit width to 1000px */
-            margin: 0 auto; /* Center the container */
-            background-color: #f8f9fa; /* Match the body background from base.html */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-    }
-
-    /* Dark Mode Styles */
-    body.dark-mode {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); /* Darker gradient for dark mode */
-    }
-    body.dark-mode .card {
-        background-color: #34495e !important; /* Override inline style for dark mode */
-    }
-    body.dark-mode .card-body h2,
-    body.dark-mode .card-body h5,
-    body.dark-mode .card-body p,
-    body.dark-mode .card-body strong {
-        color: #e0e0e0; /* Light text for readability */
-    }
-    body.dark-mode .card .dropdown-item {
-        color: #e0e0e0; /* Light text for logout link */
-    }
-    body.dark-mode .dropdown-item:hover {
-        color: #f41515; /* Keep red color on logout hover */
-    }
-    body.dark-mode .dropdown-item:hover::before {
-        background-color: #5c2d2d; /* Darker red highlight for logout hover in dark mode */
-    }
-    body.dark-mode .edit-btn {
-        color: #e0e0e0; /* Match the default text color in dark mode */
-    }
-    body.dark-mode .edit-btn:hover {
-        color: #fff; /* White text on hover for contrast */
-    }
-    body.dark-mode .edit-btn:hover::before {
-        background-color: #4f80ff; /* Blue highlight for hover in dark mode */
-        opacity: 0.7; /* Slightly transparent blue for effect */
-        border-radius: 5px;
-    }
-    body.dark-mode .edit-btn:hover {
-        transform: translateY(5px); /* Shift down by 5px on hover, matching logout */
-    }
-</style>
+</body> 
 {% endblock %}

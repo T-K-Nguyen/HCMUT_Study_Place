@@ -5,305 +5,7 @@
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
-<style>
-    /* Mobile Layout (Default) */
-    .dashboard-container {
-        padding: 10px;
-        background-color: #f8f9fa; /* Match body background for mobile */
-    }
-    .filter-form {
-        margin-bottom: 20px;
-        background-color: #fff; /* Default background for filter form */
-    }
-    .space-card {
-        height: 100%;
-    }
-    .space-card .card-body {
-        padding: 15px;
-    }
-    .space-card .card-title {
-        font-size: 1.1rem;
-    }
-    .space-card .card-text {
-        font-size: 0.9rem;
-    }
-    .space-card .badge {
-        font-size: 0.8rem;
-    }
-    .space-card .btn {
-        font-size: 0.9rem;
-        padding: 8px;
-    }
-
-    /* Centering the filter button */
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px; /* Add spacing between buttons */
-    }
-
-    /* Remove the default multi-select height since Choices.js will handle it */
-    .form-select[multiple] {
-        display: none; /* Hide the original select since Choices.js replaces it */
-    }
-
-    /* Choices.js custom styles to match the design */
-    .choices {
-        margin-bottom: 0; /* Match Bootstrap's form-control margin */
-    }
-
-    .choices__inner {
-        background-color: #fff;
-        border: 1px solid #ced4da; /* Match form-control border */
-        border-radius: 0.25rem; /* Match form-control border-radius */
-        padding: 8px; /* Reduced padding for mobile */
-        font-size: 0.9rem; /* Match form-control font size */
-        min-height: 36px; /* Slightly smaller height for mobile */
-        box-shadow: none; /* Remove default Choices.js shadow */
-    }
-
-    .choices[data-type*="select-multiple"] .choices__inner {
-        padding-bottom: 4px; /* Adjust padding to accommodate multiple selections */
-    }
-
-    .choices__list--multiple .choices__item {
-        background-color: #f8f9fa; /* Match badge bg-light */
-        border: 1px solid #dee2e6; /* Match badge border */
-        color: #212529; /* Match badge text-dark */
-        border-radius: 0.25rem; /* Match badge border-radius */
-        font-size: 0.8rem; /* Match badge font size */
-        margin-right: 5px;
-        margin-bottom: 5px;
-    }
-
-    .choices__list--multiple .choices__item--selectable {
-        padding-right: 20px; /* Space for the remove button */
-    }
-
-    .choices__list--multiple .choices__button {
-        border-left: 1px solid #dee2e6;
-        color: #dc3545; /* Red color for the remove button, matching btn-danger */
-        font-weight: bold;
-        background-color: #212529;
-    }
-
-    .choices__list--dropdown {
-        background-color: #fff;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem; /* Match form-control border-radius */
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Match filter-form shadow */
-        margin-top: 5px;
-    }
-
-    .choices__list--dropdown .choices__item--selectable {
-        padding: 8px 16px;
-        font-size: 0.9rem;
-    }
-
-    .choices__list--dropdown .choices__item--selectable.is-highlighted {
-        background-color: #e3f2fd; /* Match dropdown hover from report.html */
-        color: #007bff; /* Match dropdown hover text color */
-    }
-
-    /* Status icon styling */
-    .status-icon {
-        font-size: 1rem; /* Match badge font size */
-        line-height: 1; /* Prevent extra spacing */
-    }
-
-    /* Filter form improvements */
-    .filter-form .form-label {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.9rem;
-        margin-bottom: 5px; /* Reduced spacing */
-    }
-
-    .filter-form .form-control {
-        font-size: 0.9rem;
-        padding: 8px;
-        border-radius: 0.25rem;
-        transition: border-color 0.2s;
-    }
-
-    .filter-form .form-control:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
-    }
-
-    .filter-form .mb-2, .filter-form .mb-3 {
-        margin-bottom: 10px !important; /* Reduced spacing between fields */
-    }
-
-    /* Desktop Layout (Screen width >= 768px) */
-    @media (min-width: 768px) {
-        body {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* Gradient background for desktop */
-        }
-        .dashboard-container {
-            padding: 20px;
-            max-width: 1000px; /* Limit width for desktop */
-            margin: 0 auto;
-            background-color: #fff; /* White background for content area */
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .filter-form {
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        .filter-form .row {
-            margin: 0 -10px;
-        }
-        .filter-form .col-md-6 {
-            padding: 0 10px;
-        }
-        .filter-form .form-label {
-            font-size: 1.1rem;
-            gap: 8px;
-        }
-        .filter-form .form-control,
-        .filter-form .choices__inner {
-            font-size: 1rem;
-            padding: 10px;
-            min-height: 38px;
-        }
-        .filter-form .btn {
-            font-size: 1rem;
-            padding: 10px 20px;
-        }
-        .space-card {
-            transition: transform 0.2s; /* Add hover effect */
-        }
-        .space-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        .space-card .card-body {
-            padding: 20px;
-        }
-        .space-card .card-title {
-            font-size: 1.2rem;
-        }
-        .space-card .card-text {
-            font-size: 1rem;
-        }
-        .space-card .badge {
-            font-size: 0.9rem;
-        }
-        .space-card .btn {
-            font-size: 1rem;
-            padding: 10px;
-        }
-        .row.g-3 {
-            margin: 0 -15px; /* Adjust for wider layout */
-        }
-        .col-6 {
-            padding: 15px;
-        }
-        .auto-cancel-btn {
-            max-width: 300px;
-            margin: 0 auto;
-            font-size: 1.1rem;
-            padding: 10px;
-        }
-        .button-resize {
-            max-width: 200px;
-            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-        }
-        /* Ensure the button doesn't stretch to full width on desktop */
-        .center .btn {
-            width: auto; /* Override w-100 on desktop */
-        }
-        /* Status icon on desktop */
-        .status-icon {
-            font-size: 1.1rem;
-        }
-        .button-resize:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            background-color: #007bff; /* Slightly darker shade of #4f80ff */
-        }
-        .button-resize.btn-outline-secondary:hover {
-            background-color: #dc3545; /* Red hover for the Clear button */
-            color: #fff; /* White text on hover for contrast */
-        }
-        .button-eff {
-            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-        }
-        .button-eff:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-    }
-
-    /* Dark Mode Styles */
-    body.dark-mode .dashboard-container {
-        background-color: #2c3e50; /* Darker background for content area */
-    }
-    body.dark-mode .filter-form {
-        background-color: #34495e; /* Darker background for filter form */
-    }
-    body.dark-mode .space-card {
-        background-color: #34495e; /* Darker card background */
-    }
-    body.dark-mode .space-card .card-title,
-    body.dark-mode .space-card .card-text,
-    body.dark-mode .filter-form .form-label,
-    body.dark-mode .choices__list--dropdown .choices__item--selectable,
-    body.dark-mode .choices__list--multiple .choices__item {
-        color: #e0e0e0; /* Light text for readability */
-    }
-    body.dark-mode .filter-form .form-control,
-    body.dark-mode .choices__inner {
-        background-color: #2c3e50; /* Dark input background */
-        border-color: #4a6a8a; /* Darker border */
-        color: #e0e0e0; /* Light text */
-    }
-    body.dark-mode .filter-form .form-control:focus {
-        border-color: #4f80ff; /* Lighter blue for focus in dark mode */
-        box-shadow: 0 0 5px rgba(79, 128, 255, 0.3);
-    }
-    body.dark-mode .filter-form .form-control::placeholder {
-        color: #b0b0b0; /* Lighter gray for placeholder in dark mode */
-    }
-    body.dark-mode .choices__list--multiple .choices__item {
-        background-color: #2c3e50; /* Darker badge background */
-        border-color: #4a6a8a; /* Darker badge border */
-        color: #e0e0e0; /* Light text */
-    }
-    body.dark-mode .choices__list--dropdown {
-        background-color: #34495e; /* Darker dropdown background */
-        border-color: #4a6a8a; /* Darker border */
-    }
-    body.dark-mode .choices__list--dropdown .choices__item--selectable.is-highlighted {
-        background-color: #4a6a8a; /* Darker hover highlight */
-        color: #e0e0e0; /* Light text */
-    }
-    body.dark-mode .space-card .badge {
-        background-color: #2c3e50; /* Dark badge background */
-        border-color: #4a6a8a; /* Darker badge border */
-        color: #e0e0e0; /* Light text */
-    }
-    body.dark-mode .button-resize:hover {
-        background-color: #4f80ff; /* Lighter blue in dark mode */
-    }
-    body.dark-mode .button-resize.btn-outline-secondary:hover {
-        background-color: #dc3545; /* Keep red for Clear button */
-        color: #fff; /* White text for contrast */
-    }
-    body.dark-mode .button-eff:hover {
-        background-color: #dc3545; /* Dark mode hover for auto-cancel */
-    }
-    body.dark-mode .space-card:hover {
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Darker shadow in dark mode */
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <br>
 <div class="dashboard-container">
     <div class="mb-4 filter-form">
@@ -344,6 +46,12 @@
                     <i class="bi bi-x-circle me-1"></i> Clear
                 </button>
             </div>
+            <!-- Preserve filter parameters in pagination links -->
+            <input type="hidden" name="time" value="{{ request.args.get('time', '') }}">
+            <input type="hidden" name="capacity" value="{{ request.args.get('capacity', '') }}">
+            {% for equip in request.args.getlist('equipment[]') %}
+                <input type="hidden" name="equipment[]" value="{{ equip }}">
+            {% endfor %}
         </form>
     </div>
 
@@ -386,6 +94,63 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-container">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <!-- Previous Button -->
+                <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+                    {% set args = request.args.to_dict() %}
+                    {% set _ = args.pop('page', None) %}
+                    <a class="page-link" href="{{ url_for('reservation.dashboard', page=current_page-1, **args) }}" aria-label="Previous">
+                        <span aria-hidden="true">«</span>
+                    </a>
+                </li>
+
+                <!-- Page Numbers -->
+                {% set total_pages = (total_spaces / 12) | round(0, 'ceil') | int %}
+                {% set start_page = [1, current_page - 2] | max %}
+                {% set end_page = [total_pages, current_page + 2] | min %}
+                {% if start_page > 1 %}
+                    <li class="page-item">
+                        {% set args = request.args.to_dict() %}
+                        {% set _ = args.pop('page', None) %}
+                        <a class="page-link" href="{{ url_for('reservation.dashboard', page=1, **args) }}">1</a>
+                    </li>
+                    {% if start_page > 2 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endif %}
+                {% for page in range(start_page, end_page + 1) %}
+                    <li class="page-item {% if page == current_page %}active{% endif %}">
+                        {% set args = request.args.to_dict() %}
+                        {% set _ = args.pop('page', None) %}
+                        <a class="page-link" href="{{ url_for('reservation.dashboard', page=page, **args) }}">{{ page }}</a>
+                    </li>
+                {% endfor %}
+                {% if end_page < total_pages %}
+                    {% if end_page < total_pages - 1 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    <li class="page-item">
+                        {% set args = request.args.to_dict() %}
+                        {% set _ = args.pop('page', None) %}
+                        <a class="page-link" href="{{ url_for('reservation.dashboard', page=total_pages, **args) }}">{{ total_pages }}</a>
+                    </li>
+                {% endif %}
+
+                <!-- Next Button -->
+                <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+                    {% set args = request.args.to_dict() %}
+                    {% set _ = args.pop('page', None) %}
+                    <a class="page-link" href="{{ url_for('reservation.dashboard', page=current_page+1, **args) }}" aria-label="Next">
+                        <span aria-hidden="true">»</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
 
     {% if session.user.role == 'admin' %}

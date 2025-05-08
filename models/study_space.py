@@ -15,7 +15,7 @@ class DateTimeRange:
 class Room:
     _rooms = []  # In-memory storage
 
-    def __init__(self, roomID, type, capacity, equipment=None, status="available", location=""):
+    def __init__(self, roomID, type, capacity, equipment=None, status="", location=""):
         self.roomID = roomID
         self.type = type
         self.capacity = capacity

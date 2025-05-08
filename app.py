@@ -28,7 +28,6 @@ def init_data():
     room2 = Room("P.102", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
     room3 = Room("P.103", "individual", 2, ["Máy chiếu", "Điều hòa"], "available", "Building A")
     room4 = Room("P.104", "group", 6, ["Máy chiếu", "Điều hòa"], "available", "Building B")
-
     # Create sample bookings for testing
     start_time = datetime.now() + timedelta(hours=1)
     end_time = start_time + timedelta(hours=1)

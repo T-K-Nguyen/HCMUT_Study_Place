@@ -10,26 +10,39 @@ reservation_bp = Blueprint('reservation', __name__)
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
+    
     time_filter = request.args.get('time')
     capacity = request.args.get('capacity')
-    equipment = request.args.get('equipment')
+    equipment = request.args.get('equipment[]')  # Adjusted to match multiple selection
+    page = int(request.args.get('page', 1))  # Get page number, default to 1
+    
     criteria = {}
     if time_filter:
         start = time_filter
         from datetime import datetime, timedelta
-        end = (datetime.strptime(start, '%Y-%m-%d %H:%M') + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M')
+        end = (datetime.strptime(start, '%Y-%m-%dT%H:%M') + timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M')
         criteria['timeSlot'] = {'startTime': start, 'endTime': end}
     if capacity:
         criteria['capacity'] = int(capacity)
     if equipment:
-        criteria['equipment'] = [equipment]
+        criteria['equipment'] = request.args.getlist('equipment[]')  # Handle multiple equipment selections
+
     user = User.find_by_id(session['user']['id'])
     if isinstance(user, Student):
         rooms = user.searchRoom(criteria)
     else:
         rooms = Room.all()
-    return render_template('dashboard.html', spaces=rooms)
 
+    ITEMS_PER_PAGE = 12
+    start = (page - 1) * ITEMS_PER_PAGE
+    end = start + ITEMS_PER_PAGE
+    paginated_rooms = rooms[start:end]
+    total_rooms = len(rooms)
+
+    return render_template('dashboard.html', 
+                           spaces=paginated_rooms, 
+                           current_page=page, 
+                           total_spaces=total_rooms)
 
 @reservation_bp.route('/reserve/<space_id>', methods=['GET', 'POST'])
 def reserve_space(space_id):
@@ -106,34 +119,12 @@ def cancel_reservation(space_id):
 def checkin(space_id):
     if 'user' not in session:
         return redirect(url_for('auth.login'))
-    space = Room.find_by_id(space_id)
-    if not space or space.status != 'reserved':
-        return render_template('error.html', message="Không thể check-in. Phòng không tồn tại hoặc chưa được đặt."), 404
+    # space = Room.find_by_id(space_id)
+    # # Find the booking for this space
+    # booking = next((b for b in user.bookings if b.room.roomID == space_id and b.status == "confirmed"), None)
+    
 
-    user = User.find_by_id(session['user']['id'])
-    if not isinstance(user, Student):
-        return render_template('error.html', message="Chỉ sinh viên có thể check-in."), 403
-
-    # Find the booking for this space
-    booking = next((b for b in user.bookings if b.room.roomID == space_id and b.status == "confirmed"), None)
-    if not booking:
-        return render_template('error.html', message="Không tìm thấy đặt phòng để check-in."), 404
-
-    if request.method == 'POST':
-        if request.is_json:
-            data = request.get_json()
-            qr_code = data.get('qr_code')
-        else:
-            qr_code = request.form.get('qr_code')
-
-        if not qr_code:
-            return jsonify({'error': 'Mã QR không được cung cấp.'}), 400
-
-        if user.checkIn(qr_code):
-            return jsonify({'message': 'Check-in thành công!', 'redirect': url_for('reservation.dashboard')}), 200
-        return jsonify({'error': 'Mã QR không hợp lệ.'}), 400
-
-    return render_template('checkin.html', space=space, booking=booking, message=None, error=None)
+    return render_template('checkin.html', space=None, booking=None, message=None, error=None)
 
 @reservation_bp.route('/success')
 def success():
@@ -142,11 +133,9 @@ def success():
 
 @reservation_bp.route('/auto_cancel')
 def auto_cancel():
-    if 'user' not in session or session['user']['role'] != 'admin':
-        return redirect(url_for('auth.login'))
-    from datetime import datetime
-    for booking in Booking.all():
-        if booking.timeSlot.startTime < datetime.now() and booking.status == "pending":
-            booking.cancel()
-            print(f"Auto-canceled booking {booking.bookingID}")
-    return redirect(url_for('reservation.dashboard'))
+    # from datetime import datetime
+    # for booking in Booking.all():
+    #     if booking.timeSlot.startTime < datetime.now() and booking.status == "pending":
+    #         booking.cancel()
+    #         print(f"Auto-canceled booking {booking.bookingID}")
+    return render_template('cancel.html', booking=None)
