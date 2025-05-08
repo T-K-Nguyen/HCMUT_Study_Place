@@ -1,53 +1,3 @@
-# from flask import Flask, redirect, url_for, render_template
-# from controllers.auth_controller import auth_bp
-# from controllers.reservation_controller import reservation_bp
-# from controllers.iot_controller import iot_bp
-# from models.user import Student, Admin
-# from models.study_space import Room
-# from models.iot_device import IoTDevice
-# from models.reservation import Booking
-# from models.room_schedule import RoomSchedule
-# from datetime import datetime, timedelta
-#
-# app = Flask(__name__, template_folder='views/template', static_folder='views/static')
-# app.secret_key = 's3mrs_demo'  # Required for session management
-#
-# # Register blueprints for controllers
-# app.register_blueprint(auth_bp, url_prefix='/auth')
-# app.register_blueprint(reservation_bp, url_prefix='/')
-# app.register_blueprint(iot_bp, url_prefix='/iot')
-#
-# # Initialize sample data
-# def init_data():
-#     # Create sample users
-#     Student("1", "Student One", "student1@hcmut.edu.vn")
-#     Admin("2", "Admin One", "admin1@hcmut.edu.vn")
-#
-#     # Create sample rooms with equipment
-#     room1 = Room("P.101", "individual", 2, ["Projector", "Air Conditioner"], "reserved", "Building A")
-#     room2 = Room("P.102", "group", 6, ["Projector", "Air Conditioner"], "available", "Building B")
-#     room3 = Room("P.103", "individual", 2, ["Projector", "Air Conditioner"], "available", "Building A")
-#     room4 = Room("P.104", "group", 6, ["Projector", "Air Conditioner"], "available", "Building B")
-#
-#     # Create sample bookings for testing
-#     start_time = datetime.now() + timedelta(hours=1)
-#     end_time = start_time + timedelta(hours=1)
-#     student = Student.find_by_id("1")
-#     booking = Booking("1", student, room1, {"startTime": start_time, "endTime": end_time})
-#     booking.confirm()
-#     IoTDevice("AC", "P.101", "ok")
-#
-# # Initialize data on app startup
-# init_data()
-#
-# # Root route to redirect to login
-# @app.route('/')
-# def index():
-#     return redirect(url_for('auth.login'))
-#
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=5000, debug=True)
-
 from flask import Flask, redirect, url_for
 from controllers.auth_controller import auth_bp
 from controllers.reservation_controller import reservation_bp
@@ -59,6 +9,7 @@ from models.iot_device import IoTDevice
 from models.reservation import Booking
 from models.room_schedule import RoomSchedule
 from datetime import datetime, timedelta
+import json
 import uuid
 
 app = Flask(__name__, template_folder='views/template', static_folder='views/static')
@@ -80,11 +31,57 @@ def populate_initial_data():
             admin = Admin(userID=2, username="admin1", name="Admin One", email="admin1@hcmut.edu.vn", password="admin")
             db.add_all([student, admin])
 
-            room1 = Room(roomID="P.101", type="individual", capacity=2, equipment='["Projector", "Air Conditioner"]', status="reserved", location="Building A")
-            room2 = Room(roomID="P.102", type="group", capacity=6, equipment='["Projector", "Air Conditioner"]', status="available", location="Building B")
-            room3 = Room(roomID="P.103", type="individual", capacity=2, equipment='["Projector", "Air Conditioner"]', status="available", location="Building A")
-            room4 = Room(roomID="P.104", type="group", capacity=6, equipment='["Projector", "Air Conditioner"]', status="available", location="Building B")
-            db.add_all([room1, room2, room3, room4])
+            # Danh sách các phòng mẫu
+            room1 = Room(roomID="P.100", type="individual", capacity=2, equipment='["Projector", "Air Conditioner"]',
+                         status="reserved", location="Building A")
+
+            room_data = [
+                {"roomID": "P.101", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building A"},
+                {"roomID": "P.102", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building B"},
+                {"roomID": "P.103", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building A"},
+                {"roomID": "P.104", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building B"},
+                {"roomID": "P.105", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building A"},
+                {"roomID": "P.106", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building B"},
+                {"roomID": "P.107", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building A"},
+                {"roomID": "P.108", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building B"},
+                {"roomID": "P.109", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building A"},
+                {"roomID": "P.201", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building B"},
+                {"roomID": "P.202", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building A"},
+                {"roomID": "P.203", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
+                 "status": "available", "location": "Building B"},
+            ]
+
+            for data in room_data:
+                # Kiểm tra xem phòng đã tồn tại chưa
+                existing_room = db.query(Room).filter_by(roomID=data["roomID"]).first()
+                if existing_room:
+                    print(f"Room {data['roomID']} already exists. Skipping...")
+                    continue
+
+                # Chuyển danh sách thiết bị thành chuỗi JSON
+                equipment_json = json.dumps(data["equipment"])
+
+                # Tạo đối tượng Room và thêm vào DB
+                room = Room(
+                    roomID=data["roomID"],
+                    type=data["type"],
+                    capacity=data["capacity"],
+                    equipment=equipment_json,
+                    status=data["status"],
+                    location=data["location"]
+                )
+                db.add(room)
 
             start_time = datetime.now() + timedelta(hours=1)
             end_time = start_time + timedelta(hours=1)
