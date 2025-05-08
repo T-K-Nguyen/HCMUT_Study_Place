@@ -1,62 +1,98 @@
 [
+  {
+    "roomID": "P.101",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.102",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+  {
+    "roomID": "P.103",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.104",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
     {
-        "roomID": "P.101",
-        "type": "individual",
-        "capacity": 2,
-        "equipment": [
-            "Projector",
-            "Air Conditioner"
-        ],
-        "status": "reserved",
-        "location": "Building A",
-        "timeSlot": {
-            "startTime": "2025-05-08 17:33",
-            "endTime": "2025-05-08 18:33"
-        }
-    },
+    "roomID": "P.105",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.106",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+  {
+    "roomID": "P.107",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.108",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
     {
-        "roomID": "P.102",
-        "type": "group",
-        "capacity": 6,
-        "equipment": [
-            "Projector",
-            "Air Conditioner"
-        ],
-        "status": "available",
-        "location": "Building B",
-        "timeSlot": {
-            "startTime": "2025-05-08 17:18",
-            "endTime": "2025-05-08 18:18"
-        }
-    },
-    {
-        "roomID": "P.103",
-        "type": "individual",
-        "capacity": 2,
-        "equipment": [
-            "Projector",
-            "Air Conditioner"
-        ],
-        "status": "available",
-        "location": "Building A",
-        "timeSlot": {
-            "startTime": "2025-05-07 17:22",
-            "endTime": "2025-05-07 18:22"
-        }
-    },
-    {
-        "roomID": "P.104",
-        "type": "group",
-        "capacity": 6,
-        "equipment": [
-            "Projector",
-            "Air Conditioner"
-        ],
-        "status": "available",
-        "location": "Building B",
-        "timeSlot": {
-            "startTime": "2025-05-08 16:43",
-            "endTime": "2025-05-08 17:43"
-        }
-    }
+    "roomID": "P.109",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.201",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+  {
+    "roomID": "P.202",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.203",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  }
 ]

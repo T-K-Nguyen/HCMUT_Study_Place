@@ -20,8 +20,7 @@ class Booking(Base):
     room = relationship("Room")
     timeSlot = relationship("DateTimeRange")
 
-    def __init__(self, bookingID, student, room, timeSlot):
-        self.bookingID = bookingID
+    def __init__(self, student, room, timeSlot):
         self.student = student
         self.room = room
         self.timeSlot = timeSlot

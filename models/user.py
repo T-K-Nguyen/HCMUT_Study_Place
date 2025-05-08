@@ -96,6 +96,7 @@ class Student(User):
         if not room.getAvailability(timeSlot):
             return None
         booking = Booking(student=self, room=room, timeSlot=timeSlot)
+        booking.status = "confirmed"
         db.add(booking)
         return booking
 

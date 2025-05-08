@@ -5,7 +5,7 @@ from models.reservation import Booking
 from data.database import get_db
 from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload
-
+import json
 reservation_bp = Blueprint('reservation', __name__)
 
 
@@ -39,14 +39,9 @@ def dashboard():
         return redirect(url_for('auth.login'))
 
     rooms = db.query(Room).options(joinedload(Room.timeSlot)).all()
-
-    # Convert rooms to a format suitable for the template
-    import json
-
-
     db.close()
-    # return render_template('dashboard.html', spaces=spaces)
 
+    #pages for multiple room
     ITEMS_PER_PAGE = 12
     start = (page - 1) * ITEMS_PER_PAGE
     end = start + ITEMS_PER_PAGE
@@ -168,7 +163,6 @@ def checkin(space_id):
     if 'user' not in session:
         return redirect(url_for('auth.login'))
 
-
     db = next(get_db())
     space = db.query(Room).options(joinedload(Room.timeSlot)).filter_by(roomID=space_id).first()
     if not space or space.status != 'reserved':
@@ -181,7 +175,7 @@ def checkin(space_id):
         return render_template('error.html', message="Chỉ sinh viên có thể check-in."), 403
 
     booking = db.query(Booking).filter_by(room_id=space_id, student_id=user.userID, status="confirmed").first()
-    print(f"Checking booking for room_id={space_id}, student_id={user.userID}, status=confirmed")
+    print(f"\nChecking booking for room_id={space_id}, student_id={user.userID}, status=confirmed")
     if booking:
         print("Booking found:", booking.bookingID, booking.status)
         print("Status:", booking.status)
@@ -228,11 +222,14 @@ def checkin(space_id):
     db.close()
     return render_template('checkin.html', space=space, booking=booking, message=None, error=None)
 
-
-
 @reservation_bp.route('/success')
 def success():
     return render_template('success.html', message="Reservation successful. QR code sent to email.")
+
+# @reservation_bp.route('/success')
+# def success():
+#
+#     return render_template('success.html', message="Checkin successful. Rememember to return on time.")
 
 
 @reservation_bp.route('/auto_cancel')

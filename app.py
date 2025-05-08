@@ -35,32 +35,9 @@ def populate_initial_data():
             room1 = Room(roomID="P.100", type="individual", capacity=2, equipment='["Projector", "Air Conditioner"]',
                          status="reserved", location="Building A")
 
-            room_data = [
-                {"roomID": "P.101", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building A"},
-                {"roomID": "P.102", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building B"},
-                {"roomID": "P.103", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building A"},
-                {"roomID": "P.104", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building B"},
-                {"roomID": "P.105", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building A"},
-                {"roomID": "P.106", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building B"},
-                {"roomID": "P.107", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building A"},
-                {"roomID": "P.108", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building B"},
-                {"roomID": "P.109", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building A"},
-                {"roomID": "P.201", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building B"},
-                {"roomID": "P.202", "type": "individual", "capacity": 2, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building A"},
-                {"roomID": "P.203", "type": "group", "capacity": 6, "equipment": ["Projector", "Air Conditioner"],
-                 "status": "available", "location": "Building B"},
-            ]
+            #load existing file
+            with open("data/spaces.json", "r") as f:
+                room_data = json.load(f)
 
             for data in room_data:
                 # Kiểm tra xem phòng đã tồn tại chưa
@@ -69,10 +46,7 @@ def populate_initial_data():
                     print(f"Room {data['roomID']} already exists. Skipping...")
                     continue
 
-                # Chuyển danh sách thiết bị thành chuỗi JSON
                 equipment_json = json.dumps(data["equipment"])
-
-                # Tạo đối tượng Room và thêm vào DB
                 room = Room(
                     roomID=data["roomID"],
                     type=data["type"],
@@ -88,7 +62,7 @@ def populate_initial_data():
             time_slot = DateTimeRange(startTime=start_time, endTime=end_time)
             db.add(time_slot)
 
-            booking = Booking(bookingID=1, student=student, room=room1, timeSlot=time_slot)
+            booking = Booking(student=student, room=room1, timeSlot=time_slot)
             booking.qrCode = str(uuid.uuid4())  # Generate a unique QR code
             booking.status = "confirmed"  # Explicitly set to confirmed
             booking.confirm()  # Should set room status to "reserved"
