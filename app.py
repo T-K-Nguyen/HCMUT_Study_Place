@@ -115,6 +115,7 @@ with app.app_context():
     init_db()
     populate_initial_data()
 
+
 @app.route('/')
 def index():
     return redirect(url_for('auth.login'))

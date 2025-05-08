@@ -174,12 +174,22 @@ class Room(Base):
 
     timeSlot = relationship("DateTimeRange")
 
+
     def getAvailability(self, timeSlot):
         if self.status != "available":
             return False
         if not self.timeSlot:
             return True  # Phòng chưa được đặt gì thì rảnh
         return not self.timeSlot.overlaps(timeSlot)
+
+    def __init__(self, roomID, type, capacity, equipment=None, status="", location=""):
+        self.roomID = roomID
+        self.type = type
+        self.capacity = capacity
+        self.equipment = equipment or []
+        self.status = status
+        self.location = location
+        Room._rooms.append(self)
 
     def updateStatus(self, newStatus):
         self.status = newStatus

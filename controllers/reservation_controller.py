@@ -172,12 +172,17 @@ def dashboard():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
 
+
     db = next(get_db())
+
     time_filter = request.args.get('time')
     capacity = request.args.get('capacity')
-    equipment = request.args.get('equipment')
+    equipment = request.args.get('equipment[]')  # Adjusted to match multiple selection
+    page = int(request.args.get('page', 1))  # Get page number, default to 1
+    
     criteria = {}
     if time_filter:
+
         start = datetime.strptime(time_filter, '%Y-%m-%dT%H:%M')
         end = start + timedelta(hours=1)
         criteria['timeSlot'] = DateTimeRange(start, end)
@@ -208,6 +213,16 @@ def dashboard():
     db.close()
     return render_template('dashboard.html', spaces=spaces)
 
+    ITEMS_PER_PAGE = 12
+    start = (page - 1) * ITEMS_PER_PAGE
+    end = start + ITEMS_PER_PAGE
+    paginated_rooms = rooms[start:end]
+    total_rooms = len(rooms)
+
+    return render_template('dashboard.html', 
+                           spaces=paginated_rooms, 
+                           current_page=page, 
+                           total_spaces=total_rooms)
 
 @reservation_bp.route('/reserve/<space_id>', methods=['GET', 'POST'])
 def reserve_space(space_id):
@@ -311,6 +326,7 @@ def checkin(space_id):
     if 'user' not in session:
         return redirect(url_for('auth.login'))
 
+
     db = next(get_db())
     space = db.query(Room).options(joinedload(Room.timeSlot)).filter_by(roomID=space_id).first()
     if not space or space.status != 'reserved':
@@ -371,6 +387,7 @@ def checkin(space_id):
     return render_template('checkin.html', space=space, booking=booking, message=None, error=None)
 
 
+
 @reservation_bp.route('/success')
 def success():
     return render_template('success.html', message="Reservation successful. QR code sent to email.")
@@ -378,6 +395,7 @@ def success():
 
 @reservation_bp.route('/auto_cancel')
 def auto_cancel():
+
     if 'user' not in session or session['user']['role'] != 'admin':
         return redirect(url_for('auth.login'))
 
