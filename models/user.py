@@ -114,10 +114,11 @@ class Student(User):
     def checkIn(self, qrCode):
         from models.reservation import Booking
         db = SessionLocal()
-        booking = db.query(Booking).filter_by(qrCode=qrCode, student_id=self.userID, status="pending").first()
+        # Changed from status="pending" to status="confirmed"
+        booking = db.query(Booking).filter_by(qrCode=qrCode, student_id=self.userID, status="confirmed").first()
         if booking:
-            booking.confirm()
-            booking.room.updateStatus("in_use")
+            booking.status = "completed"
+            booking.room.updateStatus("in_use")  # Ensure room status is updated
             print(f"IoT: Devices activated for {booking.room.roomID}")
             db.commit()
         db.close()

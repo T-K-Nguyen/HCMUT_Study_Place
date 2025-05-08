@@ -7,7 +7,11 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload
 import json
 import qrcode
+import qrcode.image.pil
+import io
+import base64
 import os
+import time
 
 reservation_bp = Blueprint('reservation', __name__)
 
@@ -89,7 +93,7 @@ def reserve_space(space_id):
 
         try:
             start_dt = datetime.strptime(time, '%Y-%m-%dT%H:%M')
-            end_dt = start_dt + timedelta(hours=1)
+            end_dt = start_dt + timedelta(hours=1/60/10)
         except ValueError as e:
             db.close()
             return render_template('error.html',
@@ -109,31 +113,60 @@ def reserve_space(space_id):
         print("\nSpace:", space)
         print("\nTimeslot:", time_slot.to_string())
         if booking:
+            # Ensure booking is added to the session and committed to get bookingID
+            db.add(booking)
+            db.commit()  # Commit to assign bookingID
+            if booking.bookingID is None:
+                print("Booking ID is None after commit")
+                db.close()
+                return render_template('error.html', message="Lỗi khi tạo đặt phòng: bookingID không được gán."), 500
+
             space.updateStatus('reserved')
             space.updateTimeSlot(time_slot)
             booking.status = "confirmed"  # Ensure booking is confirmed
+            print(f"Booking ID: {booking.bookingID}")
             print(f"Booking QR Code: {booking.qrCode}")
 
-            # Generate QR code image with error handling
+            # Generate QR code
             qr_code_data = str(booking.qrCode)
-            booking_id = booking.bookingID  # Capture bookingID before session close
-            qr_image_path = os.path.join('views/static', 'qrcodes', f'qr_{booking_id}.png')
-            os.makedirs(os.path.dirname(qr_image_path), exist_ok=True)
             try:
-                qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                qr = qrcode.QRCode(version=1, box_size=5, border=2)
                 qr.add_data(qr_code_data)
                 qr.make(fit=True)
-                qr_image = qr.make_image(fill='black', back_color='white')
-                qr_image.save(qr_image_path)
+                img = qr.make_image(fill='black', back_color='white')
+
+                # Convert to base64 for immediate rendering
+                buffered = io.BytesIO()
+                img.save(buffered, format="PNG")
+                qr_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                qr_data_uri = f"data:image/png;base64,{qr_base64}"
+
+                # Save QR code to filesystem
+                booking_id = booking.bookingID
+                qr_image_path = os.path.join('views', 'static', 'qrcodes', f'qr_{booking_id}.png')
+                os.makedirs(os.path.dirname(qr_image_path), exist_ok=True)
+                img.save(qr_image_path)
                 print(f"QR image saved to: {qr_image_path}")
+
+                # Ensure the file is fully written (optional since rendering uses base64)
+                max_attempts = 10
+                attempt = 0
+                while not os.path.exists(qr_image_path) and attempt < max_attempts:
+                    time.sleep(0.1)  # Wait 100ms per attempt
+                    attempt += 1
+                if not os.path.exists(qr_image_path):
+                    print(f"QR image not found after {max_attempts} attempts - proceeding with base64 rendering")
+                    # Continue anyway since we're using base64 for rendering
+
             except Exception as e:
-                print(f"Error generating QR image: {e}")
+                print(f"Error generating QR code: {e}")
                 db.close()
                 return render_template('error.html', message=f"Failed to generate QR code: {str(e)}"), 500
 
             db.commit()
             db.close()
-            return redirect(url_for('reservation.success', qr_image=f'/static/qrcodes/qr_{booking_id}.png'))
+            return redirect(
+                url_for('reservation.success', qr_image=qr_data_uri, qr_code=qr_code_data))
         db.close()
         return render_template('error.html', message="Đặt phòng thất bại. Vui lòng thử lại."), 400
 
@@ -144,44 +177,52 @@ def reserve_space(space_id):
 @reservation_bp.route('/cancel/<space_id>', methods=['GET', 'POST'])
 def cancel_reservation(space_id):
     if 'user' not in session:
-        return redirect(url_for('auth.login'))
+        print("No user in session, returning JSON error for cancellation")  # Debug log
+        return jsonify({'error': 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.'}), 401
 
     db = next(get_db())
     space = db.query(Room).filter_by(roomID=space_id).first()
     if not space:
         db.close()
+        print(f"Room {space_id} not found during cancellation")  # Debug log
         return jsonify({'error': 'Không tìm thấy phòng.'}), 404
 
     user = db.query(Student).filter_by(userID=session['user']['id']).first()
     if not user:
         db.close()
-        return jsonify({'error': 'Chỉ sinh viên có thể hủy đặt phòng.'}), 403
+        print("User not found or not a student during cancellation")  # Debug log
+        return jsonify({'error': 'Chỉ sinh viên mới có thể huỷ.'}), 403
 
     booking = db.query(Booking).filter_by(room_id=space_id, student_id=user.userID, status="confirmed").first()
     if not booking:
         db.close()
-        return jsonify({'error': 'Không tìm thấy đặt phòng để hủy.'}), 404
-
-    if request.method == 'GET':
-        db.close()
-        return render_template('cancel.html', space=space, booking=booking)
+        print(f"No confirmed booking found for room {space_id} and user {user.userID}")  # Debug log
+        return jsonify({'error': 'Bạn không có đặt phòng này hoặc đã huỷ.'}), 404
 
     if request.method == 'POST':
-        if booking.status != 'confirmed':
+        try:
+            booking.status = "cancelled"
+            space.updateStatus("available")
+            space.updateTimeSlot(None)
+            db.commit()
+            print(f"Successfully canceled booking {booking.bookingID} for room {space_id}")  # Debug log
             db.close()
-            return jsonify({'error': 'Đặt phòng này không thể hủy.'}), 400
-        user.cancelBooking(booking.bookingID)
-        space.updateStatus('available')
-        space.updateTimeSlot(None)
-        db.commit()
-        db.close()
-        return jsonify({'message': 'Hủy đặt phòng thành công!'}), 200
+            return jsonify({'message': 'Hủy đặt phòng thành công!', 'redirect': url_for('reservation.dashboard')}), 200
+        except Exception as e:
+            db.rollback()
+            print(f"Error canceling booking: {e}")  # Debug log
+            db.close()
+            return jsonify({'error': f'Lỗi khi hủy đặt phòng: {str(e)}'}), 500
+
+    db.close()
+    return render_template('cancel.html', space=space, booking=booking)
+
 
 
 @reservation_bp.route('/checkin/<space_id>', methods=['GET', 'POST'])
 def checkin(space_id):
     if 'user' not in session:
-        return redirect(url_for('auth.login'))
+        return jsonify({'error': 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.'}), 401
 
     db = next(get_db())
     space = db.query(Room).options(joinedload(Room.timeSlot)).filter_by(roomID=space_id).first()
@@ -238,14 +279,15 @@ def checkin(space_id):
         print(f"Comparing QR code: '{qr_code}' with booking QR code: '{booking_qr_code}'")
         if qr_code == booking_qr_code:
             print(f"QR code match successful. Attempting check-in for user {user.userID}.")
-            if user.checkIn(qr_code):
-                space.updateStatus('available')
-                space.updateTimeSlot(None)
-                booking.status = "completed"
-                db.commit()
-                print(f"Check-in successful for booking {booking.bookingID}.")
-                db.close()
-                return jsonify({'message': 'Check-in thành công!', 'redirect': url_for('reservation.dashboard')}), 200
+            if qr_code == booking_qr_code:
+                print(f"QR code match successful. Attempting check-in for user {user.userID}.")
+                if user.checkIn(qr_code):
+                    space.updateStatus('in_use')
+                    booking.status = "completed"
+                    db.commit()
+                    print(f"Check-in successful for booking {booking.bookingID}. Room {space_id} set to in_use.")
+                    db.close()
+                    return jsonify({'message': 'Check-in thành công!', 'redirect': url_for('reservation.checkin_success')}), 200
             print("Check-in failed in user.checkIn method.")
             db.close()
             return jsonify({'error': 'Check-in thất bại. Vui lòng thử lại.'}), 400
@@ -258,14 +300,17 @@ def checkin(space_id):
 
 
 @reservation_bp.route('/checking')
-def checkin_page():
-    return render_template('success.html', message="Checkin successful. Remember to return on time.")
+def checkin_success():
+    return render_template('checkin_success.html', message="Checkin successful. Remember to return on time.")
 
 
 @reservation_bp.route('/success')
 def success():
     qr_image = request.args.get('qr_image')
-    return render_template('success.html', message="Reservation successful. QR code sent to email.", qr_image=qr_image)
+    qr_code = request.args.get('qr_code')  # Retrieve the qr_code value
+    print(f"Rendering success page with qr_code: {qr_code}")  # Debug print
+    return render_template('success.html', message="Reservation successful. QR code sent to email.", qr_image=qr_image,
+                           qr_code=qr_code)
 
 
 @reservation_bp.route('/auto_cancel')
@@ -274,11 +319,19 @@ def auto_cancel():
         return redirect(url_for('auth.login'))
 
     db = next(get_db())
-    bookings = db.query(Booking).filter_by(status="pending").all()
+    bookings = db.query(Booking).all()  # Check all bookings, not just pending
+    current_time = datetime.now()
     for booking in bookings:
-        if booking.timeSlot.startTime < datetime.now():
-            booking.cancel()
-            print(f"Auto-canceled booking {booking.bookingID}")
+        if booking.status in ["confirmed",
+                              "completed"] and booking.timeSlot and booking.timeSlot.endTime < current_time:
+            if booking.room:
+                booking.room.updateStatus('available')
+                booking.room.updateTimeSlot(None)
+                if booking.status == "confirmed":
+                    booking.cancel()  # Cancel if still confirmed
+                elif booking.status == "completed":
+                    db.delete(booking)  # Remove completed booking if time has passed
+                print(f"Booking {booking.bookingID} ended. Room {booking.room.roomID} set to available.")
             db.commit()
     db.close()
     return redirect(url_for('reservation.dashboard'))

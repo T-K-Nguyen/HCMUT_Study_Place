@@ -56,6 +56,12 @@
         </div>
         <button type="submit" class="btn btn-success w-100 mb-2" style="font-size: 0.95rem; padding: 10px; border-radius: 8px; transition: all 0.3s ease;">Check-In</button>
       </form>
+      <!-- Cancel Reservation Button -->
+      <form id="cancel-form" method="POST" action="{{ url_for('reservation.cancel_reservation', space_id=space.roomID) }}">
+        <button type="submit" class="btn btn-danger w-100 mb-2" onclick="return confirm('Are you sure you want to cancel your reservation?');" style="font-size: 0.95rem; padding: 10px; border-radius: 8px; transition: all 0.3s ease;">
+          <i class="bi bi-x-circle me-1"></i> Cancel Reservation
+        </button>
+      </form>
       <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary w-100" style="font-size: 0.95rem; padding: 10px; border-radius: 8px; transition: all 0.3s ease;">Back to Dashboard</a>
     </div>
   </div>
@@ -113,6 +119,7 @@
       document.getElementById('qr-reader-results').style.color = 'red';
       document.getElementById('stop-qr-scan').style.display = 'none';
       document.getElementById('start-qr-scan').style.display = 'block';
+      alert('Error: ' + error);
     } else if (qrCode) {
       document.getElementById('qr-reader-results').innerText = `Scanned QR Code: ${qrCode}`;
       document.getElementById('qr-reader-results').style.color = '#28a745';
@@ -128,27 +135,41 @@
         }
       })
       .then(response => {
+        console.log('Response status:', response.status);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          return response.text().then(text => {
+            throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+          });
         }
         return response.json();
       })
       .then(data => {
         console.log('Fetch response:', data);
         if (data.message) {
-          alert(data.message);
+          console.log('Success message:', data.message);
+          alert(data.message); // Display success message
           if (data.redirect) {
-            window.location.href = data.redirect;
+            console.log('Redirecting to:', data.redirect);
+            window.location.href = data.redirect; // Perform redirect
+          } else {
+            console.warn('No redirect URL provided in response');
+            window.location.href = '{{ url_for("reservation.checkin_success") }}'; // Fallback redirect
           }
         } else {
+          console.error('Check-in failed:', data.error);
           document.getElementById('qr-reader-results').innerText = data.error || 'Check-in failed.';
           document.getElementById('qr-reader-results').style.color = 'red';
+          alert('Error: ' + (data.error || 'Check-in failed.'));
         }
       })
       .catch(error => {
         console.error('Error during check-in:', error);
         document.getElementById('qr-reader-results').innerText = `Error during check-in: ${error.message}`;
         document.getElementById('qr-reader-results').style.color = 'red';
+        alert('Error during check-in: ' + error.message);
+        if (error.message.includes('Phiên đăng nhập không hợp lệ')) {
+          window.location.href = '{{ url_for("auth.login") }}';
+        }
       });
 
       // Stop the scanner after scanning
@@ -159,6 +180,102 @@
         document.getElementById('video-container').style.display = 'none';
       }
     }
+  });
+
+  // Handle manual form submission
+  document.getElementById('checkin-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent default form submission
+    console.log('Manual check-in form submitted');
+
+    const form = this;
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('Manual submission response status:', response.status);
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Manual submission fetch response:', data);
+      if (data.message) {
+        console.log('Success message:', data.message);
+        alert(data.message); // Display success message
+        if (data.redirect) {
+          console.log('Redirecting to:', data.redirect);
+          window.location.href = data.redirect; // Perform redirect
+        } else {
+          console.warn('No redirect URL provided in response');
+          window.location.href = '{{ url_for("reservation.checkin_success") }}'; // Fallback redirect
+        }
+      } else {
+        console.error('Check-in failed:', data.error);
+        document.getElementById('qr-reader-results').innerText = data.error || 'Check-in failed.';
+        document.getElementById('qr-reader-results').style.color = 'red';
+        alert('Error: ' + (data.error || 'Check-in failed.'));
+      }
+    })
+    .catch(error => {
+      console.error('Error during manual check-in:', error);
+      document.getElementById('qr-reader-results').innerText = `Error during check-in: ${error.message}`;
+      document.getElementById('qr-reader-results').style.color = 'red';
+      alert('Error during check-in: ' + error.message);
+      if (error.message.includes('Phiên đăng nhập không hợp lệ')) {
+        window.location.href = '{{ url_for("auth.login") }}';
+      }
+    });
+  });
+
+  // Handle Cancel Form Submission
+  document.getElementById('cancel-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent default form submission
+    if (!confirm('Are you sure you want to cancel your reservation?')) {
+      return; // Stop if user cancels the confirmation
+    }
+
+    const form = this;
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Cancel response:', data);
+      if (data.message) {
+        alert(data.message);
+        window.location.href = '{{ url_for("reservation.dashboard") }}'; // Redirect to dashboard
+      } else {
+        document.getElementById('qr-reader-results').innerText = data.error || 'Cancellation failed.';
+        document.getElementById('qr-reader-results').style.color = 'red';
+        alert('Error: ' + (data.error || 'Cancellation failed.'));
+      }
+    })
+    .catch(error => {
+      console.error('Error during cancellation:', error);
+      document.getElementById('qr-reader-results').innerText = `Error during cancellation: ${error.message}`;
+      document.getElementById('qr-reader-results').style.color = 'red';
+      alert('Error during cancellation: ' + error.message);
+      if (error.message.includes('Phiên đăng nhập không hợp lệ')) {
+        window.location.href = '{{ url_for("auth.login") }}';
+      }
+    });
   });
 
   // Initialize Bootstrap tooltips

@@ -1,129 +1,49 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hủy đặt phòng - S3-MRS</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- jsQR library for QR code scanning -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <style>
-        video {
-            width: 100%;
-            max-width: 400px;
-            margin: 10px 0;
-        }
-        .btn-cancel {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .btn-back {
-            background-color: #e2e3e5;
-            color: #000;
-        }
-    </style>
+    <title>Cancel Reservation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
-    <div class="container mt-4">
-        <h2 class="text-center">Hủy đặt phòng</h2>
-
-        <!-- Booking Information -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Phòng {{ booking.room_id }}</h5>
-                <p class="card-text"><strong>Loại phòng:</strong> {{ 'Phòng Cá nhân' if booking.room_type == 'individual' else 'Phòng Nhóm' }}</p>
-                <p class="card-text"><strong>Thời gian:</strong> {{ booking.start_time.strftime('%a/%d/%Y %H:%M') }}</p>
-                <p class="card-text text-success"><strong>Tình trạng:</strong> Đã đặt phòng</p>
-            </div>
+    <div class="container mt-5 text-center">
+        <h1 class="display-4">Cancel Reservation</h1>
+        <div class="alert alert-warning mt-3" role="alert">
+            Are you sure you want to cancel your reservation for room {{ space.roomID }}?
         </div>
-
-        <!-- Camera Scanning Section -->
-        <div class="text-center">
-            <h5>Quét QR để xác nhận hủy</h5>
-            <video id="video" autoplay></video>
-            <canvas id="canvas" style="display: none;"></canvas>
-            <button id="startCamera" class="btn btn-primary mb-2">Mở Camera</button>
-            <p id="scanResult" class="text-muted">Chưa quét mã QR</p>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="text-center mt-3">
-            <button id="cancelBtn" class="btn btn-cancel mb-2" disabled onclick="cancelBooking()">Hủy phòng</button>
-            <a href="{{ url_for('reservation_controller.dashboard') }}" class="btn btn-back">Quay lại</a>
-        </div>
+        <button id="confirmCancel" class="btn btn-danger">Yes, Cancel Reservation</button>
+        <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
     </div>
 
-    <!-- JavaScript for Camera and QR Code Scanning -->
-    <script>
-        const video = document.getElementById('video');
-        const canvasElement = document.getElementById('canvas');
-        const canvas = canvasElement.getContext('2d');
-        const scanResult = document.getElementById('scanResult');
-        const cancelBtn = document.getElementById('cancelBtn');
-        let bookingId = null;
-
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = stream;
-                video.play();
-                scanQRCode();
-            } catch (error) {
-                console.error('Camera access denied or unavailable:', error);
-                alert('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.');
-            }
-        }
-
-        function scanQRCode() {
-            canvasElement.height = video.videoHeight;
-            canvasElement.width = video.videoWidth;
-            canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-            const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert'
-            });
-
-            if (code) {
-                bookingId = code.data;
-                scanResult.textContent = `Đã quét: ${bookingId}`;
-                scanResult.classList.remove('text-muted');
-                scanResult.classList.add('text-success');
-                cancelBtn.disabled = false;
-                video.srcObject.getTracks().forEach(track => track.stop()); // Stop camera
-            } else {
-                requestAnimationFrame(scanQRCode);
-            }
-        }
-
-        async function cancelBooking() {
-            if (!bookingId) {
-                alert('Vui lòng quét mã QR trước khi hủy.');
-                return;
-            }
-            if (!confirm('Bạn có chắc chắn muốn hủy đặt phòng này không?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/cancel/${bookingId}`, { method: 'POST' });
-                const result = await response.json();
-                if (response.ok) {
-                    alert('Đã hủy đặt phòng thành công!');
-                    window.location.href = '/dashboard';
-                } else {
-                    alert(result.error || 'Có lỗi xảy ra khi hủy đặt phòng.');
-                }
-            } catch (error) {
-                console.error('Error canceling booking:', error);
-                alert('Có lỗi xảy ra. Vui lòng thử lại.');
-            }
-        }
-
-        document.getElementById('startCamera').addEventListener('click', startCamera);
-    </script>
-
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('confirmCancel').addEventListener('click', function() {
+            fetch('{{ url_for("reservation.cancel_reservation", space_id=space.roomID) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    if (data.error.includes('đăng nhập')) {
+                        window.location.href = '{{ url_for("auth.login") }}';
+                    }
+                } else {
+                    alert(data.message);
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error during cancellation:', error);
+                alert('An error occurred while cancelling the reservation.');
+            });
+        });
+    </script>
 </body>
 </html>

@@ -12,10 +12,27 @@
                 {{ message }}
             </div>
             {% if qr_image %}
-                <div class="alert alert-info" role="alert">
-                    <i class="bi bi-qr-code"></i>
-                    Scan this QR Code:
-                    <img src="{{ qr_image }}" alt="QR Code" style="max-width: 200px; border: 2px solid #ccc; border-radius: 10px; display: block; margin: 10px auto;">
+                <div class="alert alert-info" role="alert" style="display: flex; align-items: center; justify-content: space-between; background-color: #e6f3ff; padding: 15px; border-radius: 5px;">
+                    <div style="text-align: left;">
+                        <i class="bi bi-qr-code"></i>
+                        <span>Scan this QR Code:</span>
+                        <img src="{{ qr_image }}" alt="QR Code" style="max-width: 150px; border: 2px solid #ccc; border-radius: 5px; display: block; margin: 10px 0;">
+                    </div>
+                    <div style="text-align: right;">
+                        <span>Or use this manual code:</span>
+                        {% if qr_code %}
+                            <div class="input-group" style="max-width: 200px; margin-top: 10px;">
+                                <input type="text" id="qr-code-value" class="form-control" value="{{ qr_code }}" readonly style="font-size: 0.9rem; padding: 8px; border-radius: 5px 0 0 5px;">
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyQRCode()" style="border-radius: 0 5px 5px 0;">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning" role="alert" style="margin-top: 10px;">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Manual code not available.
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             {% else %}
                 <div class="alert alert-warning" role="alert">
@@ -33,4 +50,28 @@
         </div>
     </div>
 </body>
+
+<script>
+    function copyQRCode() {
+        const qrCodeInput = document.getElementById('qr-code-value');
+        const qrCodeText = qrCodeInput.value;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(qrCodeText).then(() => {
+                alert('QR Code copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy QR Code:', err);
+                alert('Failed to copy QR Code. Please copy it manually.');
+            });
+        } else {
+            qrCodeInput.select();
+            try {
+                document.execCommand('copy');
+                alert('QR Code copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy QR Code:', err);
+                alert('Failed to copy QR Code. Please copy it manually.');
+            }
+        }
+    }
+</script>
 {% endblock %}

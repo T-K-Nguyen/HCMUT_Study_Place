@@ -27,9 +27,10 @@ def populate_initial_data():
     db = next(get_db())
     try:
         if not db.query(User).first():
-            student = Student(userID=1, username="student1", name="Student One", email="student1@hcmut.edu.vn", password="123")
-            admin = Admin(userID=2, username="admin1", name="Admin One", email="admin1@hcmut.edu.vn", password="admin")
-            db.add_all([student, admin])
+            student1 = Student(userID=1, username="student1", name="Student One", email="student1@hcmut.edu.vn", password="123")
+            student2 = Student(userID=2, username="student2", name="Student Two", email="student2@hcmut.edu.vn", password="123")
+            admin = Admin(userID=3, username="admin1", name="Admin One", email="admin1@hcmut.edu.vn", password="admin")
+            db.add_all([student1, student2, admin])
 
             # Danh sách các phòng mẫu
             room1 = Room(roomID="P.100", type="individual", capacity=2, equipment='["Projector", "Air Conditioner"]',
@@ -62,7 +63,7 @@ def populate_initial_data():
             time_slot = DateTimeRange(startTime=start_time, endTime=end_time)
             db.add(time_slot)
 
-            booking = Booking(student=student, room=room1, timeSlot=time_slot)
+            booking = Booking(student=student1, room=room1, timeSlot=time_slot)
             booking.qrCode = str(uuid.uuid4())  # Generate a unique QR code
             booking.status = "confirmed"  # Explicitly set to confirmed
             booking.confirm()  # Should set room status to "reserved"
