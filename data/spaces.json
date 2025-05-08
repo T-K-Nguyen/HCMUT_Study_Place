@@ -1,4 +1,62 @@
 [
-    {"id": 1, "name": "Room A1", "type": "individual", "status": "available", "equipment": ["whiteboard"]},
-    {"id": 2, "name": "Room B2", "type": "group", "status": "available", "equipment": ["projector", "AC"]}
+    {
+        "roomID": "P.101",
+        "type": "individual",
+        "capacity": 2,
+        "equipment": [
+            "Projector",
+            "Air Conditioner"
+        ],
+        "status": "reserved",
+        "location": "Building A",
+        "timeSlot": {
+            "startTime": "2025-05-08 17:33",
+            "endTime": "2025-05-08 18:33"
+        }
+    },
+    {
+        "roomID": "P.102",
+        "type": "group",
+        "capacity": 6,
+        "equipment": [
+            "Projector",
+            "Air Conditioner"
+        ],
+        "status": "available",
+        "location": "Building B",
+        "timeSlot": {
+            "startTime": "2025-05-08 17:18",
+            "endTime": "2025-05-08 18:18"
+        }
+    },
+    {
+        "roomID": "P.103",
+        "type": "individual",
+        "capacity": 2,
+        "equipment": [
+            "Projector",
+            "Air Conditioner"
+        ],
+        "status": "available",
+        "location": "Building A",
+        "timeSlot": {
+            "startTime": "2025-05-07 17:22",
+            "endTime": "2025-05-07 18:22"
+        }
+    },
+    {
+        "roomID": "P.104",
+        "type": "group",
+        "capacity": 6,
+        "equipment": [
+            "Projector",
+            "Air Conditioner"
+        ],
+        "status": "available",
+        "location": "Building B",
+        "timeSlot": {
+            "startTime": "2025-05-08 16:43",
+            "endTime": "2025-05-08 17:43"
+        }
+    }
 ]
