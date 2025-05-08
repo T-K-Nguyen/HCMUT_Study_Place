@@ -6,6 +6,9 @@ from data.database import get_db
 from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload
 import json
+import qrcode
+import os
+
 reservation_bp = Blueprint('reservation', __name__)
 
 
@@ -14,20 +17,18 @@ def dashboard():
     if 'user' not in session:
         return redirect(url_for('auth.login'))
 
-
     db = next(get_db())
 
     time_filter = request.args.get('time')
     capacity = request.args.get('capacity')
     equipment = request.args.get('equipment[]')  # Adjusted to match multiple selection
     page = int(request.args.get('page', 1))  # Get page number, default to 1
-    
+
     criteria = {}
     if time_filter:
-
         start = datetime.strptime(time_filter, '%Y-%m-%dT%H:%M')
         end = start + timedelta(hours=1)
-        criteria['timeSlot'] = DateTimeRange(start, end)
+        criteria['timeSlot'] = DateTimeRange(startTime=start, endTime=end)
     if capacity:
         criteria['capacity'] = int(capacity)
     if equipment:
@@ -41,7 +42,7 @@ def dashboard():
     rooms = db.query(Room).options(joinedload(Room.timeSlot)).all()
     db.close()
 
-    #pages for multiple room
+    # Pages for multiple rooms
     ITEMS_PER_PAGE = 12
     start = (page - 1) * ITEMS_PER_PAGE
     end = start + ITEMS_PER_PAGE
@@ -56,10 +57,11 @@ def dashboard():
             'timeslot': room.timeSlot.to_string() if room.timeSlot else "available"
         } for room in paginated_rooms
     ]
-    return render_template('dashboard.html', 
+    return render_template('dashboard.html',
                            spaces=spaces,
-                           current_page=page, 
+                           current_page=page,
                            total_spaces=total_rooms)
+
 
 @reservation_bp.route('/reserve/<space_id>', methods=['GET', 'POST'])
 def reserve_space(space_id):
@@ -69,7 +71,6 @@ def reserve_space(space_id):
     db = next(get_db())
 
     space = db.query(Room).options(joinedload(Room.timeSlot)).filter_by(roomID=space_id).first()
-    # space = db.query(Room).filter_by(roomID=space_id).first()
     if not space:
         db.close()
         return render_template('error.html', message="Phòng không tồn tại."), 404
@@ -106,14 +107,32 @@ def reserve_space(space_id):
         booking = user.bookRoom(db, space, time_slot)
         print("\nBooking:", booking)
         print("\nSpace:", space)
-        print("\ntimeslot:", time_slot.to_string())
+        print("\nTimeslot:", time_slot.to_string())
         if booking:
             space.updateStatus('reserved')
             space.updateTimeSlot(time_slot)
-            #booking.confirm()
+            booking.status = "confirmed"  # Ensure booking is confirmed
+            print(f"Booking QR Code: {booking.qrCode}")
+
+            # Generate QR code image
+            qr_code_data = str(booking.qrCode)
+            booking_id = booking.bookingID  # Capture bookingID before session close
+            qr_image_path = os.path.join('views/static', 'qrcodes', f'qr_{booking_id}.png')
+            os.makedirs(os.path.dirname(qr_image_path), exist_ok=True)
+            qr = qrcode.QRCode(version=1, box_size=10, border=4)
+            qr.add_data(qr_code_data)
+            qr.make(fit=True)
+            qr_image = qr.make_image(fill='black', back_color='white')
+            try:
+                qr_image.save(qr_image_path)
+            except Exception as e:
+                print(f"Error saving QR image: {e}")
+                db.close()
+                return render_template('error.html', message=f"Failed to generate QR code: {str(e)}"), 500
+
             db.commit()
             db.close()
-            return redirect(url_for('reservation.success'))
+            return redirect(url_for('reservation.success', qr_image=f'/static/qrcodes/qr_{booking_id}.png'))
         db.close()
         return render_template('error.html', message="Đặt phòng thất bại. Vui lòng thử lại."), 400
 
@@ -202,39 +221,54 @@ def checkin(space_id):
         else:
             qr_code = request.form.get('qr_code')
 
+        print(f"Received QR code from client: '{qr_code}'")
         if not qr_code:
             db.close()
             return jsonify({'error': 'Mã QR không được cung cấp.'}), 400
 
-        if qr_code == booking.qrCode:
+        if not booking.qrCode:
+            print("Booking has no QR code assigned.")
+            db.close()
+            return jsonify({'error': 'Đặt phòng không có mã QR hợp lệ.'}), 400
+
+        # Normalize QR codes for comparison (trim whitespace, ignore case)
+        qr_code = qr_code.strip()
+        booking_qr_code = booking.qrCode.strip()
+        print(f"Comparing QR code: '{qr_code}' with booking QR code: '{booking_qr_code}'")
+        if qr_code == booking_qr_code:
+            print(f"QR code match successful. Attempting check-in for user {user.userID}.")
             if user.checkIn(qr_code):
                 space.updateStatus('available')
                 space.updateTimeSlot(None)
                 booking.status = "completed"
                 db.commit()
+                print(f"Check-in successful for booking {booking.bookingID}.")
                 db.close()
                 return jsonify({'message': 'Check-in thành công!', 'redirect': url_for('reservation.dashboard')}), 200
+            print("Check-in failed in user.checkIn method.")
             db.close()
             return jsonify({'error': 'Check-in thất bại. Vui lòng thử lại.'}), 400
+        print("QR code mismatch.")
         db.close()
         return jsonify({'error': 'Mã QR không hợp lệ.'}), 400
 
     db.close()
     return render_template('checkin.html', space=space, booking=booking, message=None, error=None)
 
+
+@reservation_bp.route('/checking')
+def checkin_page():
+    return render_template('success.html', message="Checkin successful. Remember to return on time.")
+
+
 @reservation_bp.route('/success')
 def success():
-    return render_template('success.html', message="Reservation successful. QR code sent to email.")
-
-# @reservation_bp.route('/success')
-# def success():
-#
-#     return render_template('success.html', message="Checkin successful. Rememember to return on time.")
+    qr_image = request.args.get('qr_image')
+    return render_template('success.html', message="Reservation successful. QR code sent to email.", qr_image=qr_image)
 
 
 @reservation_bp.route('/auto_cancel')
 def auto_cancel():
-
     if 'user' not in session or session['user']['role'] != 'admin':
         return redirect(url_for('auth.login'))
 

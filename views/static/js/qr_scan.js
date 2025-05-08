@@ -1,150 +1,76 @@
-let scanning = false;
 let stream = null;
+let scanning = false;
 
-async function startQRScanner(spaceId, status) {
-    console.log('Starting QR scan for spaceId:', spaceId, 'status:', status);
-    if (scanning) {
-        console.log('Scanning already in progress, ignoring request.');
+function startQRScanner(spaceId, spaceStatus) {
+    console.log(`Starting QR scanner for space ${spaceId}, status: ${spaceStatus}`);
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('Camera access not supported by this browser or context.');
+        window.dispatchEvent(new CustomEvent('qrCodeScanned', { detail: { qrCode: null, error: 'Camera access not supported.' } }));
         return;
     }
+
+    const video = document.getElementById('qr-video');
+    const canvas = document.createElement('canvas');
+    canvas.style.display = 'none';
+    const videoContainer = document.getElementById('video-container');
+    videoContainer.appendChild(canvas);
+    const canvasContext = canvas.getContext('2d');
     scanning = true;
 
-    // Create video and canvas elements
-    const video = document.createElement('video');
-    const canvasElement = document.createElement('canvas');
-    const canvas = canvasElement.getContext('2d', { willReadFrequently: true }); // Optimize for frequent reads
+    // Access the camera
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(function(mediaStream) {
+            stream = mediaStream;
+            video.srcObject = stream;
+            video.play();
 
-    // Style the video element
-    video.style.display = 'block';
-    video.style.maxWidth = '90%';
-    video.style.width = '300px';
-    video.style.position = 'fixed';
-    video.style.top = '50%';
-    video.style.left = '50%';
-    video.style.transform = 'translate(-50%, -50%)';
-    video.style.border = '2px solid #007bff';
-    video.style.borderRadius = '8px';
-    video.style.zIndex = '1000';
-    video.style.backgroundColor = 'black'; // Ensure visibility
-    canvasElement.style.display = 'none';
-
-    // Append elements to the DOM
-    document.body.appendChild(video);
-    document.body.appendChild(canvasElement);
-
-    // Check for camera support
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error('Camera access not supported by this browser.');
-        alert('Trình duyệt không hỗ trợ truy cập camera.');
-        scanning = false;
-        document.body.removeChild(video);
-        document.body.removeChild(canvasElement);
-        return;
-    }
-
-    try {
-        console.log('Requesting camera access...');
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: 'environment', // Prefer rear camera
-                width: { ideal: 1280 }, // Higher resolution for better QR detection
-                height: { ideal: 720 }
-            }
-        });
-
-        console.log('Camera access granted, setting up video...');
-        video.srcObject = stream;
-        await video.play(); // Ensure video is playing
-
-        // Wait for video metadata to load
-        await new Promise(resolve => {
-            video.onloadedmetadata = () => {
-                console.log('Video metadata loaded:', video.videoWidth, 'x', video.videoHeight);
-                resolve();
-            };
-        });
-
-        // Set canvas dimensions to match video
-        canvasElement.width = video.videoWidth;
-        canvasElement.height = video.videoHeight;
-
-        // Scanning loop
-        async function tick() {
-            if (!scanning) {
-                console.log('Scanning stopped.');
-                return;
-            }
-
-            // Draw the current video frame onto the canvas
-            canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-            const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-
-            // Attempt to detect QR code
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert' // Optimize for standard QR codes
-            });
-
-            if (code) {
-                const scannedCode = code.data;
-                console.log('QR code detected:', scannedCode);
-
-                // Update UI with scan result
-                const qrResults = document.getElementById('qr-reader-results');
-                if (qrResults) {
-                    qrResults.innerText = `Scan result: ${scannedCode}`;
+            // Start scanning loop
+            function scanQRCode() {
+                if (!scanning) {
+                    console.log('Scanning stopped.');
+                    return;
                 }
 
-                // Validate QR code format
-                if (status === 'reserved' && scannedCode.startsWith('QR_')) {
-                    console.log('Sending QR code to server...');
-                    try {
-                        const response = await fetch(`/checkin/${spaceId}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `qr_code=${encodeURIComponent(scannedCode)}`
-                        });
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth;
+                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'dontInvert',
+                    });
 
-                        const text = await response.text();
-                        console.log('Server response:', text);
-                        alert(text || 'Check-in successful!');
-                        if (response.ok) {
-                            window.location.href = '/dashboard';
-                        }
-                    } catch (error) {
-                        console.error('Check-in error:', error);
-                        alert('Check-in failed. Please try again.');
+                    if (code) {
+                        console.log('QR Code detected:', code.data);
+                        scanning = false;
+                        // Dispatch custom event with the scanned QR code
+                        const event = new CustomEvent('qrCodeScanned', { detail: { qrCode: code.data } });
+                        window.dispatchEvent(event);
+                        stopCamera(video, canvas);
+                        return;
                     }
-                } else {
-                    console.warn('Invalid QR code for spaceId:', spaceId);
-                    alert(`Mã QR không hợp lệ cho phòng ${spaceId}.`);
                 }
-                stopCamera(video, canvasElement);
-            } else {
-                // Continue scanning
-                requestAnimationFrame(tick);
+                requestAnimationFrame(scanQRCode);
             }
-        }
 
-        // Start scanning
-        console.log('Starting scanning loop...');
-        requestAnimationFrame(tick);
-
-    } catch (error) {
-        console.error('Camera access failed:', error);
-        alert('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.');
-        scanning = false;
-        document.body.removeChild(video);
-        document.body.removeChild(canvasElement);
-    }
+            requestAnimationFrame(scanQRCode);
+        })
+        .catch(function(err) {
+            console.error('Error accessing camera:', err);
+            scanning = false;
+            window.dispatchEvent(new CustomEvent('qrCodeScanned', { detail: { qrCode: null, error: `Camera access failed: ${err.message}` } }));
+            stopCamera(video, canvas);
+        });
 }
 
-function stopCamera(video, canvasElement) {
-    console.log('Stopping camera...');
+function stopCamera(video, canvas) {
+    scanning = false;
     if (stream) {
         stream.getTracks().forEach(track => track.stop());
-        document.body.removeChild(video);
-        document.body.removeChild(canvasElement);
-        scanning = false;
         stream = null;
     }
+    if (video) video.srcObject = null;
+    if (canvas) canvas.remove();
+    console.log('Camera stopped.');
 }

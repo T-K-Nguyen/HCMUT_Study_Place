@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Check-In for Room {{ space.id }}{% endblock %}
+{% block title %}Check-In for Room {{ space.roomID }}{% endblock %}
 
 {% block content %}
 <body class="body-checkin">
@@ -21,11 +21,18 @@
       </button>
       <div id="qr-reader-results" class="mt-2" style="color: #28a745; font-weight: 600; font-size: 0.95rem;"></div>
       <div id="qr-error" class="mt-2 text-danger" style="font-size: 0.85rem; display: none;">Failed to start QR scanner. Please try again or use manual input.</div>
+      <div id="secure-context-warning" class="mt-2 text-danger" style="font-size: 0.85rem; display: none;">This page must be served over HTTPS or localhost to use the QR scanner.</div>
+
+      <!-- Video Container for Camera Feed -->
+      <div id="video-container" class="mt-3" style="display: none; max-width: 100%; border-radius: 10px; overflow: hidden;">
+        <video id="qr-video" style="width: 100%; height: auto; border-radius: 10px;"></video>
+      </div>
+
       <div class="d-flex align-items-center justify-content-center mb-2">
         <i class="bi bi-clock-fill me-2" style="font-size: 1.1rem; color: #6c757d;"></i>
         <div>
           <p class="mb-0 fw-semibold" style="font-size: 1rem;">Room {{ space.roomID }}</p>
-          <p class="mb-0" style="font-size: 0.85rem;">{{ space.timeslot if space.timeslot else 'N/A' }}</p>
+          <p class="mb-0" style="font-size: 0.85rem;">{{ space.timeSlot.to_string() if space.timeSlot else 'N/A' }}</p>
         </div>
       </div>
 
@@ -43,9 +50,9 @@
           <i class="bi bi-fan" style="font-size: 1.2rem; color: #007bff; transition: color 0.3s ease;"></i>
         </button>
       </div>
-      <form method="POST" action="{{ url_for('reservation.checkin', space_id=space.id) }}">
+      <form id="checkin-form" method="POST" action="{{ url_for('reservation.checkin', space_id=space.roomID) }}">
         <div class="mb-3">
-          <input type="text" class="form-control text-center" name="qr_code" placeholder="Enter QR Code" required style="font-size: 0.95rem; padding: 8px; border-radius: 8px; transition: border-color 0.3s ease;">
+          <input type="text" class="form-control text-center" name="qr_code" id="qr_code" placeholder="Enter QR Code" required style="font-size: 0.95rem; padding: 8px; border-radius: 8px; transition: border-color 0.3s ease;">
         </div>
         <button type="submit" class="btn btn-success w-100 mb-2" style="font-size: 0.95rem; padding: 10px; border-radius: 8px; transition: all 0.3s ease;">Check-In</button>
       </form>
@@ -61,17 +68,28 @@
   let videoElement = null;
   let canvasElement = null;
 
+  // Check for secure context
+  if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+    document.getElementById('start-qr-scan').disabled = true;
+    document.getElementById('secure-context-warning').style.display = 'block';
+  }
+
   document.getElementById('start-qr-scan').addEventListener('click', function() {
     console.log('Start Scanning button clicked');
     try {
-      startQRScanner('{{ space.id }}', 'reserved');
+      startQRScanner('{{ space.roomID }}', 'reserved');
       this.style.display = 'none';
       document.getElementById('stop-qr-scan').style.display = 'block';
-      videoElement = document.querySelector('video');
-      canvasElement = document.querySelector('canvas');
+      document.getElementById('video-container').style.display = 'block';
+      videoElement = document.getElementById('qr-video');
+      canvasElement = document.createElement('canvas');
+      canvasElement.style.display = 'none';
+      document.getElementById('video-container').appendChild(canvasElement);
     } catch (error) {
       console.error('Error starting QR scanner:', error);
       document.getElementById('qr-error').style.display = 'block';
+      this.style.display = 'block';
+      document.getElementById('stop-qr-scan').style.display = 'none';
     }
   });
 
@@ -82,7 +100,59 @@
     }
     this.style.display = 'none';
     document.getElementById('start-qr-scan').style.display = 'block';
+    document.getElementById('video-container').style.display = 'none';
     document.getElementById('qr-reader-results').innerText = '';
+  });
+
+  // Handle QR code scan result
+  window.addEventListener('qrCodeScanned', function(e) {
+    const { qrCode, error } = e.detail;
+    console.log('QR Code Scanned Event:', { qrCode, error });
+    if (error) {
+      document.getElementById('qr-reader-results').innerText = error;
+      document.getElementById('qr-reader-results').style.color = 'red';
+      document.getElementById('stop-qr-scan').style.display = 'none';
+      document.getElementById('start-qr-scan').style.display = 'block';
+    } else if (qrCode) {
+      document.getElementById('qr-reader-results').innerText = `Scanned QR Code: ${qrCode}`;
+      document.getElementById('qr-reader-results').style.color = '#28a745';
+      document.getElementById('qr_code').value = qrCode; // Populate the form input
+
+      // Automatically submit the form after scanning
+      const form = document.getElementById('checkin-form');
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          alert(data.message);
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          }
+        } else {
+          document.getElementById('qr-reader-results').innerText = data.error || 'Check-in failed.';
+          document.getElementById('qr-reader-results').style.color = 'red';
+        }
+      })
+      .catch(error => {
+        console.error('Error during check-in:', error);
+        document.getElementById('qr-reader-results').innerText = 'Error during check-in.';
+        document.getElementById('qr-reader-results').style.color = 'red';
+      });
+
+      // Stop the scanner after scanning
+      if (videoElement && canvasElement) {
+        stopCamera(videoElement, canvasElement);
+        document.getElementById('stop-qr-scan').style.display = 'none';
+        document.getElementById('start-qr-scan').style.display = 'block';
+        document.getElementById('video-container').style.display = 'none';
+      }
+    }
   });
 
   // Initialize Bootstrap tooltips
