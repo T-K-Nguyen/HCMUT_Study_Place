@@ -127,8 +127,14 @@
           'Accept': 'application/json'
         }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then(data => {
+        console.log('Fetch response:', data);
         if (data.message) {
           alert(data.message);
           if (data.redirect) {
@@ -141,7 +147,7 @@
       })
       .catch(error => {
         console.error('Error during check-in:', error);
-        document.getElementById('qr-reader-results').innerText = 'Error during check-in.';
+        document.getElementById('qr-reader-results').innerText = `Error during check-in: ${error.message}`;
         document.getElementById('qr-reader-results').style.color = 'red';
       });
 

@@ -114,19 +114,20 @@ def reserve_space(space_id):
             booking.status = "confirmed"  # Ensure booking is confirmed
             print(f"Booking QR Code: {booking.qrCode}")
 
-            # Generate QR code image
+            # Generate QR code image with error handling
             qr_code_data = str(booking.qrCode)
             booking_id = booking.bookingID  # Capture bookingID before session close
             qr_image_path = os.path.join('views/static', 'qrcodes', f'qr_{booking_id}.png')
             os.makedirs(os.path.dirname(qr_image_path), exist_ok=True)
-            qr = qrcode.QRCode(version=1, box_size=10, border=4)
-            qr.add_data(qr_code_data)
-            qr.make(fit=True)
-            qr_image = qr.make_image(fill='black', back_color='white')
             try:
+                qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                qr.add_data(qr_code_data)
+                qr.make(fit=True)
+                qr_image = qr.make_image(fill='black', back_color='white')
                 qr_image.save(qr_image_path)
+                print(f"QR image saved to: {qr_image_path}")
             except Exception as e:
-                print(f"Error saving QR image: {e}")
+                print(f"Error generating QR image: {e}")
                 db.close()
                 return render_template('error.html', message=f"Failed to generate QR code: {str(e)}"), 500
 
