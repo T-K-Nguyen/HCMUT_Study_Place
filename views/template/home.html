@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<body class="body-home">
+  <div class="home-container">
+    <div class="d-flex flex-column align-items-center" style="padding: 20px;">
+      <h1 class="fw-bold mb-4 welcome-text">Welcome to HCMUT Study</h1>
+      <h2 class="greeting-text mb-4">
+        {% if now.hour < 12 %}
+          Good Morning
+        {% else %}
+          Good Afternoon
+        {% endif %}
+        {{ session.user.name if session.user else 'Guest' }}!
+      </h2>
+      <p class="text-center intro-text mb-3">HCMUT Study is your all-in-one platform for managing room reservations at Ho Chi Minh City University of Technology. Designed to simplify the booking process, this app helps students and staff efficiently schedule study spaces, track availability, and enhance collaboration.</p>
+      <p class="text-center intro-text mb-4">With features like real-time status updates, personalized dashboards, and easy booking, HCMUT Study aims to support your academic journey.</p>
+      <p class="text-center cta-text mb-4">Ready to book a room? </p>
+      <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-primary cta-btn">Visit the Dashboard to Find a Room</a>
+    </div>
+  </div>
+</body>
+{% endblock %}

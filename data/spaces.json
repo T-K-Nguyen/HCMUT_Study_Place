@@ -1,4 +1,98 @@
 [
-    {"id": 1, "name": "Room A1", "type": "individual", "status": "available", "equipment": ["whiteboard"]},
-    {"id": 2, "name": "Room B2", "type": "group", "status": "available", "equipment": ["projector", "AC"]}
+  {
+    "roomID": "P.101",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.102",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+  {
+    "roomID": "P.103",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.104",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+    {
+    "roomID": "P.105",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.106",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+  {
+    "roomID": "P.107",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.108",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+    {
+    "roomID": "P.109",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.201",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building B"
+  },
+  {
+    "roomID": "P.202",
+    "type": "individual",
+    "capacity": 2,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "available",
+    "location": "Building A"
+  },
+  {
+    "roomID": "P.203",
+    "type": "group",
+    "capacity": 6,
+    "equipment": ["Projector", "Air Conditioner"],
+    "status": "In Maintenance",
+    "location": "Building B"
+  }
 ]

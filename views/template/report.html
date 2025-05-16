@@ -1,55 +1,307 @@
 {% extends 'base.html' %}
 
-{% block title %}Báo cáo chi tiết{% endblock %}
+{% block title %}Detailed Report{% endblock %}
 
 {% block content %}
-    <h1>Báo cáo chi tiết</h1>
-    <a href="#" class="btn btn-primary mb-3">Xuất báo cáo</a>
-    <ul class="nav nav-tabs mb-3">
-        <li class="nav-item">
-            <a class="nav-link active" href="#overview" data-bs-toggle="tab">Tổng quan</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#iot" data-bs-toggle="tab">Thiết bị IoT</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#history" data-bs-toggle="tab">Lịch sử đặt</a>
-        </li>
-    </ul>
-    <div class="tab-content">
-        <div class="tab-pane active" id="overview">
-            <h3>Tổng quan</h3>
-            <p><strong>Tổng số phòng:</strong> {{ total_rooms }}</p>
-            <p><strong>Thiết bị hoạt động:</strong> {{ active_devices }}/{{ total_devices }}</p>
-            <p><strong>Tỷ lệ đặt phòng:</strong> {{ booking_rate }}%</p>
-            <p><strong>Đang sử dụng:</strong> {{ in_use }}</p>
-            <!-- Placeholder for usage chart -->
-            <p><strong>Biểu đồ sử dụng:</strong> (Biểu đồ sẽ được thêm sau)</p>
-            <h4>Thống kê chi tiết</h4>
-            <p><strong>Tổng số lần đặt:</strong> {{ total_bookings }}</p>
-            <p><strong>Thời gian trung bình/lần:</strong> {{ avg_time }}</p>
-            <p><strong>Phòng được đặt nhiều nhất:</strong> {{ most_booked_room }}</p>
-            <p><strong>Khung giờ cao điểm:</strong> {{ peak_hours }}</p>
+<br>
+<body class="body-report">
+  <div class="report-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="fw-bold">Detailed report</h2>
+      <div class="center">
+        <div class="dropdown">
+          <button class="btn btn-primary button-resize dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Export
+          </button>
+          <ul class="dropdown-menu report" aria-labelledby="exportDropdown">
+            <li class="text-center"><a class="dropdown-item" href="#" onclick="exportAsPDF()">Export as PDF</a></li>
+          </ul>
         </div>
-        <div class="tab-pane" id="iot">
-            <h3>Thiết bị IoT</h3>
-            <p><strong>Tổng thiết bị:</strong> {{ total_devices }}</p>
-            <p><strong>Cần bảo trì:</strong> {{ maintenance_needed }}</p>
-            {% for device in devices %}
-                <p><strong>{{ device.room.roomID }}</strong> - Bảo trì: {{ device.maintenance_date }}</p>
-                <ul>
-                    {% for equip in device.equipment %}
-                        <li>{{ equip }}</li>
-                    {% endfor %}
-                </ul>
-            {% endfor %}
-        </div>
-        <div class="tab-pane" id="history">
-            <h3>Lịch sử đặt phòng gần đây</h3>
-            {% for booking in bookings %}
-                <p>{{ booking.room.roomID }} - {{ booking.timeSlot.startTime.strftime('%d/%m/%Y %H:%M') }} - {{ booking.timeSlot.endTime.strftime('%H:%M') }} - {{ 'Hoàn thành' if booking.status == 'confirmed' else 'Đã hủy' }}</p>
-            {% endfor %}
-        </div>
+      </div>
     </div>
-    <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary mt-3">Quay lại</a>
+
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item flex-fill">
+        <a class="nav-link active text-center" href="#overview" data-bs-toggle="tab">Overview</a>
+      </li>
+      <li class="nav-item flex-fill">
+        <a class="nav-link text-center" href="#iot" data-bs-toggle="tab">IoT Devices</a>
+      </li>
+      <li class="nav-item flex-fill">
+        <a class="nav-link text-center" href="#history" data-bs-toggle="tab">Booking History</a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="overview">
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded text-center">
+              <div class="fw-bold">Total room number</div>
+              <div class="fs-4">{{ total_rooms }}</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded text-center">
+              <div class="fw-bold">In Use</div>
+              <div class="fs-4 text-success">{{ in_use }}</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded text-center">
+              <div class="fw-bold">Devices In Use</div>
+              <div class="fs-4">{{ active_devices }}/{{ total_devices }}</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded text-center">
+              <div class="fw-bold">Booking Rate</div>
+              <div class="fs-4 text-warning">{{ booking_rate }}%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded shadow-sm mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Usage chart</h5>
+            <div class="btn-group" role="group" aria-label="Chart time range">
+              <button type="button" class="btn btn-sm chart-btn active" data-time-range="week">Week</button>
+              <button type="button" class="btn btn-sm chart-btn" data-time-range="month">Month</button>
+            </div>
+          </div>
+          <!-- Hidden input to store the selected time range -->
+          <input type="hidden" id="chartTimeRange" value="week">
+          <!-- Chart wrapper with fixed height -->
+          <div class="chart-wrapper" style="height: 300px; overflow: hidden;">
+            <canvas id="usageChart"></canvas>
+          </div>
+        </div>
+
+        <div class="p-3 rounded shadow-sm">
+          <h5>Detailed Statistics</h5>
+          <div class="row">
+            <div class="col-6">Total number of orders:</div>
+            <div class="col-6 text-end fw-bold">{{ total_bookings }} lần</div>
+            <div class="col-6">Average time/time:</div>
+            <div class="col-6 text-end fw-bold">{{ avg_time }}</div>
+            <div class="col-6">Most booked rooms:</div>
+            <div class="col-6 text-end fw-bold">{{ most_booked_room }}</div>
+            <div class="col-6">Peak hours:</div>
+            <div class="col-6 text-end fw-bold">{{ peak_hours }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="iot">
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded text-center">
+              <div class="fw-bold">Total devices</div>
+              <div class="fs-4">{{ 2 }}</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded text-center">
+              <div class="fw-bold">Need maintenance</div>
+              <div class="fs-4 text-danger">{{ 1 }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+          {% for device in devices %}
+          <div class="p-3 rounded shadow-sm">
+            <div class="d-flex justify-content-between">
+              <div class="fw-bold">{{ "P.203" }}</div>
+              <div class="small">Maintenance: {{ "10/5/2025" }}</div>
+            </div>
+            <div class="mt-2">
+              <div class="row">
+                  <div class="col-6 col-md-3 d-flex align-items-center mb-2">
+                    <span class="badge rounded-circle {{ 'bg-danger' }}"
+                      style="width: 10px; height: 16px; margin-right: 8px;">
+                    </span>
+                    <span>{{ "Projector" }}</span>
+                  </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="history">
+        <div class="mb-3">
+          <h5>Recent booking history</h5>
+          {% for booking in bookings %}
+          <div class="border-bottom py-2">
+            {{ booking.room.roomID }} -
+            {{ booking.timeSlot.startTime.strftime('%d/%m/%Y %H:%M') }} -
+            {{ booking.timeSlot.endTime.strftime('%H:%M') }} -
+            <span class="fw-bold">
+              {{ 'Hoàn thành' if booking.status == 'confirmed' else 'Đã hủy' }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+  // Get the buttons and chart elements
+  const weekBtn = document.querySelector('button[data-time-range="week"]');
+  const monthBtn = document.querySelector('button[data-time-range="month"]');
+  const chartTimeRangeInput = document.getElementById('chartTimeRange');
+  const ctx = document.getElementById('usageChart').getContext('2d');
+
+  // Mock data for weekly and monthly charts (replace with real data from backend)
+  const weeklyData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    values: [5, 8, 3, 6, 4, 2, 1]  // Example booking counts per day
+  };
+
+  const monthlyData = {
+    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    values: [20, 25, 15, 30]  // Example booking counts per week
+  };
+
+  // Initialize Chart.js bar chart
+  const usageChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: weeklyData.labels,
+      datasets: [{
+        label: 'Usage',
+        data: weeklyData.values,
+        backgroundColor: (context) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300); // Gradient from top to bottom
+          gradient.addColorStop(0, '#007bff'); // Darker blue at top
+          gradient.addColorStop(1, '#4f80ff'); // Lighter blue at bottom
+          return gradient;
+        },
+        borderColor: '#0056b3',
+        borderWidth: 1,
+        barThickness: 35, // Slightly thicker bars for better visibility
+        borderRadius: 7, // Rounded edges for bars
+        barPercentage: 0.8, // Adjust bar width relative to category
+        categoryPercentage: 0.9 // Adjust spacing between bars
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,  // Disable aspect ratio to respect fixed height
+      plugins: {
+        legend: {
+          display: false  // Hide legend
+        },
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#34495e',
+          titleColor: '#e0e0e0',
+          bodyColor: '#e0e0e0'
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false  // No grid lines on X-axis
+          },
+          ticks: {
+            font: {
+              size: 12
+            },
+            color: '#555'  // Darker labels in light mode
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            display: false  // No grid lines on Y-axis
+          },
+          ticks: {
+            font: {
+              size: 12
+            },
+            color: '#555',
+            stepSize: 2  // Adjust step size based on data
+          }
+        }
+      }
+    }
+  });
+
+  // Adjust chart colors for dark mode
+  function updateChartColors() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    usageChart.options.scales.x.ticks.color = isDarkMode ? '#e0e0e0' : '#555';
+    usageChart.options.scales.y.ticks.color = isDarkMode ? '#e0e0e0' : '#555';
+    usageChart.options.plugins.tooltip.backgroundColor = isDarkMode ? '#4a6a8a' : '#34495e';
+    usageChart.options.plugins.tooltip.titleColor = '#e0e0e0';
+    usageChart.options.plugins.tooltip.bodyColor = '#e0e0e0';
+    usageChart.update();
+  }
+
+  // Function to update the chart based on the selected time range
+  function updateChart(timeRange) {
+    chartTimeRangeInput.value = timeRange;
+
+    if (timeRange === 'week') {
+      usageChart.data.labels = weeklyData.labels;
+      usageChart.data.datasets[0].data = weeklyData.values;
+      usageChart.options.scales.y.ticks.stepSize = 2;
+    } else {
+      usageChart.data.labels = monthlyData.labels;
+      usageChart.data.datasets[0].data = monthlyData.values;
+      usageChart.options.scales.y.ticks.stepSize = 4;
+    }
+
+    updateChartColors();
+    usageChart.update();
+  }
+
+  // Add event listeners to the buttons
+  weekBtn.addEventListener('click', () => {
+    weekBtn.classList.add('active');
+    monthBtn.classList.remove('active');
+    updateChart('week');
+  });
+
+  monthBtn.addEventListener('click', () => {
+    monthBtn.classList.add('active');
+    weekBtn.classList.remove('active');
+    updateChart('month');
+  });
+
+  // Update chart colors when theme changes
+  document.addEventListener('DOMContentLoaded', () => {
+    updateChartColors();
+    const toggleButtons = document.querySelectorAll('.theme-toggle-btn');
+    toggleButtons.forEach(button => {
+      button.addEventListener('click', updateChartColors);
+    });
+  });
+
+  // Initialize the chart with the default time range (week)
+  updateChart('week');
+
+  // Export as PDF function (unchanged)
+  function exportAsPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    html2canvas(document.querySelector('.report-container')).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = doc.getImageProperties(imgData);
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      doc.save('report.pdf');
+    });
+  }
+</script>
 {% endblock %}

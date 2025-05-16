@@ -1,44 +1,56 @@
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from data.database import Base, SessionLocal
 from models.study_space import DateTimeRange
+from datetime import datetime
+import uuid
 
-class Booking:
-    _bookings = []  # In-memory storage
+class Booking(Base):
+    __tablename__ = "bookings"
 
-    def __init__(self, bookingID, student, room, timeSlot):
-        self.bookingID = bookingID
+    bookingID = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.userID"))
+    room_id = Column(String, ForeignKey("rooms.roomID"))  # Changed to String
+    timeSlot_id = Column(Integer, ForeignKey("datetime_ranges.id"))
+    qrCode = Column(String)
+    status = Column(String, default="pending")
+    createdAt = Column(DateTime, default=datetime.now)
+
+    student = relationship("Student", back_populates="bookings")
+    room = relationship("Room")
+    timeSlot = relationship("DateTimeRange")
+
+    def __init__(self, student, room, timeSlot):
         self.student = student
         self.room = room
-        self.timeSlot = timeSlot if isinstance(timeSlot, DateTimeRange) else DateTimeRange(timeSlot['startTime'], timeSlot['endTime'])
-        self.qrCode = f"QR_{bookingID}"
+        self.timeSlot = timeSlot
+        self.qrCode = str(uuid.uuid4())  # Generate QR code on creation
         self.status = "pending"
-        self.createdAt = datetime.now()
-        Booking._bookings.append(self)
 
     def confirm(self):
         self.status = "confirmed"
-        self.room.updateStatus("in_use")
-        from models.room_schedule import RoomSchedule
-        schedule = RoomSchedule(
-            scheduleID=str(len(RoomSchedule.all()) + 1),
-            room=self.room,
-            startTime=self.timeSlot.startTime,
-            endTime=self.timeSlot.endTime,
-            status=self.status
-        )
-        schedule.save()
+        self.room.updateStatus("reserved")
+        db = SessionLocal()
+        db.commit()
+        db.close()
 
     def cancel(self):
         self.status = "canceled"
         self.room.updateStatus("available")
-        from models.room_schedule import RoomSchedule
-        schedule = next((s for s in RoomSchedule.all() if s.room == self.room and s.startTime == self.timeSlot.startTime), None)
-        if schedule:
-            schedule.status = "canceled"
+        db = SessionLocal()
+        db.commit()
+        db.delete(self)
+        db.close()
 
     def save(self):
-        if self not in Booking._bookings:
-            Booking._bookings.append(self)
+        db = SessionLocal()
+        db.add(self)
+        db.commit()
+        db.close()
 
-    @staticmethod
-    def all():
-        return Booking._bookings
+    @classmethod
+    def all(cls):
+        db = SessionLocal()
+        bookings = db.query(cls).all()
+        db.close()
+        return bookings

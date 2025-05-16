@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Profile - HCMUT Study{% endblock %}
+{% block content %}
+<body class="profile-body">
+    <div class="full-page-content">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+                <!-- User Info Section -->
+                <div class="card mb-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.8);">
+                    <div class="card-body py-4">
+                        <h2 class="text-center mb-4 profile">User Profile</h2>
+                        <!-- Profile Picture -->
+                        <div class="text-center mb-4">
+                            <img src="{{ url_for('static', filename='default-profile.jpg') }}" alt="Profile Picture" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                        </div>
+                        <h5 class="card-title mb-3">Personal Information</h5>
+                        <p class="mb-2"><strong>Name:</strong> {{ user.name }}</p>
+                        <p class="mb-2"><strong>Email:</strong> {{ user.email if user.email else 'Not provided' }}</p>
+                        <p class="mb-3"><strong>Role:</strong> {{ user.role }}</p>
+                        <!-- Settings Link -->
+                        <div class="text-center">
+                            <a class="dropdown-item edit-btn" href="">
+                                <i class="bi bi-pencil me-2"></i> Edit Profile
+                            </a>
+                            <a class="dropdown-item logout" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body> 
+{% endblock %}

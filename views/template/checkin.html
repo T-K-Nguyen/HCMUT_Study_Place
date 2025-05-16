@@ -1,71 +1,289 @@
 {% extends 'base.html' %}
 
-{% block title %}Check-in{% endblock %}
+{% block title %}Check-In for Room {{ space.roomID }}{% endblock %}
 
 {% block content %}
-    <h1>Check-in</h1>
-    {% if message %}
-        <div class="alert alert-success" role="alert">
-            {{ message }}
-        </div>
-        <h3>Phòng {{ space.roomID }}</h3>
-        <p>{{ space.timeSlot.startTime.strftime('%H:%M') if space.timeSlot else 'N/A' }} - {{ space.timeSlot.endTime.strftime('%H:%M') if space.timeSlot else 'N/A' }}</p>
-        <h4>Thiết bị IoT</h4>
-        <ul>
-            {% for equip in space.equipment %}
-                <li>{{ equip }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        {% if error %}
-            <div class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
-        {% endif %}
-        <p>Phòng {{ space.roomID }}</p>
+<body class="body-checkin">
+  <div class="container mt-3 text-center">
+    <h1 class="display-6 fw-bold text-primary mb-3" style="text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">Check-in</h1>
+
+    <!-- QR Scanner Section -->
+    <div class="card mx-auto mb-3" style="max-width: 320px; background-color: #ffffff; border: none; border-radius: 20px; padding: 20px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+      <div class="qr-icon mb-3">
+        <i class="bi bi-qr-code-scan" style="font-size: 3rem; color: #6c757d; transition: color 0.3s ease;"></i>
+      </div>
+      <p class="mb-1" style="font-size: 0.9rem;">Tap to scan your QR code</p>
+      <button id="start-qr-scan" class="btn btn-link p-0 mt-1" style="text-decoration: none; color: #007bff; font-size: 0.95rem; transition: color 0.3s ease;">
+        <i class="bi bi-camera-fill me-1"></i> Start Scanning
+      </button>
+      <button id="stop-qr-scan" class="btn btn-link p-0 mt-1" style="text-decoration: none; color: #dc3545; font-size: 0.95rem; transition: color 0.3s ease; display: none;">
+        <i class="bi bi-x-circle-fill me-1"></i> Stop Scanning
+      </button>
+      <div id="qr-reader-results" class="mt-2" style="color: #28a745; font-weight: 600; font-size: 0.95rem;"></div>
+      <div id="qr-error" class="mt-2 text-danger" style="font-size: 0.85rem; display: none;">Failed to start QR scanner. Please try again or use manual input.</div>
+      <div id="secure-context-warning" class="mt-2 text-danger" style="font-size: 0.85rem; display: none;">This page must be served over HTTPS or localhost to use the QR scanner.</div>
+
+      <!-- Video Container for Camera Feed -->
+      <div id="video-container" class="mt-3" style="display: none; max-width: 100%; border-radius: 10px; overflow: hidden;">
+        <video id="qr-video" style="width: 100%; height: auto; border-radius: 10px;"></video>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-center mb-2">
+        <i class="bi bi-clock-fill me-2" style="font-size: 1.1rem; color: #6c757d;"></i>
         <div>
-            <video id="video" style="display: none;"></video>
-            <canvas id="canvas" style="width: 100%; border: 1px solid #ddd;"></canvas>
-            <button class="btn btn-primary mb-3" onclick="startQRScanner()">Nhấn để quét mã QR</button>
+          <p class="mb-0 fw-semibold" style="font-size: 1rem;">Room {{ space.roomID }}</p>
+          <p class="mb-0" style="font-size: 0.85rem;">{{ space.timeSlot.to_string() if space.timeSlot else 'N/A' }}</p>
         </div>
-        <form method="POST" id="qrForm">
-            <div class="mb-3">
-                <label for="qr_code" class="form-label">Mã QR</label>
-                <input type="text" class="form-control" id="qr_code" name="qr_code" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Check-in</button>
-        </form>
-    {% endif %}
-    <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary mt-3">Quay lại</a>
+      </div>
 
-    <script>
-        async function startQRScanner() {
-            const video = document.getElementById('video');
-            const canvasElement = document.getElementById('canvas');
-            const canvas = canvasElement.getContext('2d');
+      <div class="d-flex align-items-center justify-content-center mb-2">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-info-circle-fill me-2" style="font-size: 1.1rem; color: #6c757d;"></i>
+          <span class="fw-semibold" style="font-size: 1rem;">IoT Devices</span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center justify-content-center mb-2">
+        <button class="btn btn-link p-0 me-2 iot-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Projector">
+          <i class="bi bi-projector" style="font-size: 1.2rem; color: #007bff; transition: color 0.3s ease;"></i>
+        </button>
+        <button class="btn btn-link p-0 iot-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Air Conditioner">
+          <i class="bi bi-fan" style="font-size: 1.2rem; color: #007bff; transition: color 0.3s ease;"></i>
+        </button>
+      </div>
+      <form id="checkin-form" method="POST" action="{{ url_for('reservation.checkin', space_id=space.roomID) }}">
+        <div class="mb-3">
+          <input type="text" class="form-control text-center" name="qr_code" id="qr_code" placeholder="Enter QR Code" required style="font-size: 0.95rem; padding: 8px; border-radius: 8px; transition: border-color 0.3s ease;">
+        </div>
+        <button type="submit" class="btn btn-success w-100 mb-2" style="font-size: 0.95rem; padding: 10px; border-radius: 8px; transition: all 0.3s ease;">Check-In</button>
+      </form>
+      <!-- Cancel Reservation Button -->
+      <form id="cancel-form" method="POST" action="{{ url_for('reservation.cancel_reservation', space_id=space.roomID) }}">
+        <button type="submit" class="btn btn-danger w-100 mb-2" onclick="return confirm('Are you sure you want to cancel your reservation?');" style="font-size: 0.95rem; padding: 10px; border-radius: 8px; transition: all 0.3s ease;">
+          <i class="bi bi-x-circle me-1"></i> Cancel Reservation
+        </button>
+      </form>
+      <a href="{{ url_for('reservation.dashboard') }}" class="btn btn-secondary w-100" style="font-size: 0.95rem; padding: 10px; border-radius: 8px; transition: all 0.3s ease;">Back to Dashboard</a>
+    </div>
+  </div>
+</body>
 
-            // Request camera access
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            video.srcObject = stream;
-            video.play();
+<!-- Include jsQR Library and Custom Script -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="{{ url_for('static', filename='js/qr_scan.js') }}"></script>
+<script>
+  let videoElement = null;
+  let canvasElement = null;
 
-            canvasElement.style.display = 'block';
-            video.style.display = 'none';
+  // Check for secure context
+  if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+    document.getElementById('start-qr-scan').disabled = true;
+    document.getElementById('secure-context-warning').style.display = 'block';
+  }
 
-            function tick() {
-                canvasElement.height = video.videoHeight;
-                canvasElement.width = video.videoWidth;
-                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code) {
-                    document.getElementById('qr_code').value = code.data;
-                    document.getElementById('qrForm').submit(); // Auto-submit the form
-                } else {
-                    requestAnimationFrame(tick);
-                }
-            }
-            requestAnimationFrame(tick);
+  document.getElementById('start-qr-scan').addEventListener('click', function() {
+    console.log('Start Scanning button clicked');
+    try {
+      startQRScanner('{{ space.roomID }}', 'reserved');
+      this.style.display = 'none';
+      document.getElementById('stop-qr-scan').style.display = 'block';
+      document.getElementById('video-container').style.display = 'block';
+      videoElement = document.getElementById('qr-video');
+      canvasElement = document.createElement('canvas');
+      canvasElement.style.display = 'none';
+      document.getElementById('video-container').appendChild(canvasElement);
+    } catch (error) {
+      console.error('Error starting QR scanner:', error);
+      document.getElementById('qr-error').style.display = 'block';
+      this.style.display = 'block';
+      document.getElementById('stop-qr-scan').style.display = 'none';
+    }
+  });
+
+  document.getElementById('stop-qr-scan').addEventListener('click', function() {
+    console.log('Stop Scanning button clicked');
+    if (videoElement && canvasElement) {
+      stopCamera(videoElement, canvasElement);
+    }
+    this.style.display = 'none';
+    document.getElementById('start-qr-scan').style.display = 'block';
+    document.getElementById('video-container').style.display = 'none';
+    document.getElementById('qr-reader-results').innerText = '';
+  });
+
+  // Handle QR code scan result
+  window.addEventListener('qrCodeScanned', function(e) {
+    const { qrCode, error } = e.detail;
+    console.log('QR Code Scanned Event:', { qrCode, error });
+    if (error) {
+      document.getElementById('qr-reader-results').innerText = error;
+      document.getElementById('qr-reader-results').style.color = 'red';
+      document.getElementById('stop-qr-scan').style.display = 'none';
+      document.getElementById('start-qr-scan').style.display = 'block';
+      alert('Error: ' + error);
+    } else if (qrCode) {
+      document.getElementById('qr-reader-results').innerText = `Scanned QR Code: ${qrCode}`;
+      document.getElementById('qr-reader-results').style.color = '#28a745';
+      document.getElementById('qr_code').value = qrCode; // Populate the form input
+
+      // Automatically submit the form after scanning
+      const form = document.getElementById('checkin-form');
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+          'Accept': 'application/json'
         }
-    </script>
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+          return response.text().then(text => {
+            throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Fetch response:', data);
+        if (data.message) {
+          console.log('Success message:', data.message);
+          alert(data.message); // Display success message
+          if (data.redirect) {
+            console.log('Redirecting to:', data.redirect);
+            window.location.href = data.redirect; // Perform redirect
+          } else {
+            console.warn('No redirect URL provided in response');
+            window.location.href = '{{ url_for("reservation.checkin_success") }}'; // Fallback redirect
+          }
+        } else {
+          console.error('Check-in failed:', data.error);
+          document.getElementById('qr-reader-results').innerText = data.error || 'Check-in failed.';
+          document.getElementById('qr-reader-results').style.color = 'red';
+          alert('Error: ' + (data.error || 'Check-in failed.'));
+        }
+      })
+      .catch(error => {
+        console.error('Error during check-in:', error);
+        document.getElementById('qr-reader-results').innerText = `Error during check-in: ${error.message}`;
+        document.getElementById('qr-reader-results').style.color = 'red';
+        alert('Error during check-in: ' + error.message);
+        if (error.message.includes('Phiên đăng nhập không hợp lệ')) {
+          window.location.href = '{{ url_for("auth.login") }}';
+        }
+      });
+
+      // Stop the scanner after scanning
+      if (videoElement && canvasElement) {
+        stopCamera(videoElement, canvasElement);
+        document.getElementById('stop-qr-scan').style.display = 'none';
+        document.getElementById('start-qr-scan').style.display = 'block';
+        document.getElementById('video-container').style.display = 'none';
+      }
+    }
+  });
+
+  // Handle manual form submission
+  document.getElementById('checkin-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent default form submission
+    console.log('Manual check-in form submitted');
+
+    const form = this;
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('Manual submission response status:', response.status);
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Manual submission fetch response:', data);
+      if (data.message) {
+        console.log('Success message:', data.message);
+        alert(data.message); // Display success message
+        if (data.redirect) {
+          console.log('Redirecting to:', data.redirect);
+          window.location.href = data.redirect; // Perform redirect
+        } else {
+          console.warn('No redirect URL provided in response');
+          window.location.href = '{{ url_for("reservation.checkin_success") }}'; // Fallback redirect
+        }
+      } else {
+        console.error('Check-in failed:', data.error);
+        document.getElementById('qr-reader-results').innerText = data.error || 'Check-in failed.';
+        document.getElementById('qr-reader-results').style.color = 'red';
+        alert('Error: ' + (data.error || 'Check-in failed.'));
+      }
+    })
+    .catch(error => {
+      console.error('Error during manual check-in:', error);
+      document.getElementById('qr-reader-results').innerText = `Error during check-in: ${error.message}`;
+      document.getElementById('qr-reader-results').style.color = 'red';
+      alert('Error during check-in: ' + error.message);
+      if (error.message.includes('Phiên đăng nhập không hợp lệ')) {
+        window.location.href = '{{ url_for("auth.login") }}';
+      }
+    });
+  });
+
+  // Handle Cancel Form Submission
+  document.getElementById('cancel-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent default form submission
+    if (!confirm('Are you sure you want to cancel your reservation?')) {
+      return; // Stop if user cancels the confirmation
+    }
+
+    const form = this;
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Cancel response:', data);
+      if (data.message) {
+        alert(data.message);
+        window.location.href = '{{ url_for("reservation.dashboard") }}'; // Redirect to dashboard
+      } else {
+        document.getElementById('qr-reader-results').innerText = data.error || 'Cancellation failed.';
+        document.getElementById('qr-reader-results').style.color = 'red';
+        alert('Error: ' + (data.error || 'Cancellation failed.'));
+      }
+    })
+    .catch(error => {
+      console.error('Error during cancellation:', error);
+      document.getElementById('qr-reader-results').innerText = `Error during cancellation: ${error.message}`;
+      document.getElementById('qr-reader-results').style.color = 'red';
+      alert('Error during cancellation: ' + error.message);
+      if (error.message.includes('Phiên đăng nhập không hợp lệ')) {
+        window.location.href = '{{ url_for("auth.login") }}';
+      }
+    });
+  });
+
+  // Initialize Bootstrap tooltips
+  document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  });
+</script>
 {% endblock %}

@@ -3,47 +3,177 @@
 {% block title %}Bảng điều khiển{% endblock %}
 
 {% block content %}
-    <h1>Bảng điều khiển</h1>
-    <h3>Bộ lọc</h3>
-    <form method="GET" class="mb-4">
-        <div class="mb-3">
-            <label for="time" class="form-label">Thời gian</label>
-            <input type="text" class="form-control" id="time" name="time" placeholder="2025-04-18 14:00" value="{{ request.args.get('time', '') }}">
-        </div>
-        <div class="mb-3">
-            <label for="capacity" class="form-label">Sức chứa tối thiểu</label>
-            <input type="number" class="form-control" id="capacity" name="capacity" placeholder="2" value="{{ request.args.get('capacity', '') }}">
-        </div>
-        <div class="mb-3">
-            <label for="equipment" class="form-label">Tất cả thiết bị</label>
-            <select class="form-control" id="equipment" name="equipment">
-                <option value="">Chọn thiết bị</option>
-                <option value="whiteboard">Bảng trắng</option>
-                <option value="projector">Máy chiếu</option>
-                <option value="AC">Điều hòa</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Lọc</button>
-    </form>
-
-    {% if spaces %}
-        <ul class="list-group">
-            {% for space in spaces %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ space.roomID }}</span>
-                    {% if space.status == 'available' %}
-                        <a href="{{ url_for('reservation.reserve_space', space_id=space.roomID) }}" class="btn btn-primary btn-sm">Đặt Ngay</a>
-                    {% elif space.status == 'reserved' and session.user.role == 'student' %}
-                        <a href="{{ url_for('reservation.checkin', space_id=space.roomID) }}" class="btn btn-primary btn-sm">Check-In</a>
-                    {% endif %}
-                </li>
+<link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<br>
+<div class="dashboard-container">
+    <div class="mb-4 filter-form">
+        <h2 class="fw-bold">Dashboard</h2>
+        <br>
+        <form method="GET" class="p-3 rounded shadow-sm">
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <label for="time" class="form-label">
+                        <i class="bi bi-clock"></i> Time
+                    </label>
+                    <input type="datetime-local" class="form-control" id="time" name="time" required
+                           value="{{ request.args.get('time', '') }}">
+                </div>
+                <div class="col-md-6 mb-2">
+                    <label for="capacity" class="form-label">
+                        <i class="bi bi-people"></i> Minimum Capacity
+                    </label>
+                    <input type="number" class="form-control" id="capacity" name="capacity" placeholder="Enter capacity"
+                           value="{{ request.args.get('capacity', '') }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="equipment" class="form-label">
+                    <i class="bi bi-gear"></i> Equipments
+                </label>
+                <select class="form-select" id="equipment" name="equipment[]" multiple>
+                    <option value="AC">Air Conditioner</option>
+                    <option value="projector">Projector</option>
+                    <option value="smartboard">Smartboard</option>
+                </select>
+            </div>
+            <div class="center">
+                <button type="submit" class="btn btn-primary button-resize">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+                <button type="reset" class="btn btn-outline-secondary button-resize">
+                    <i class="bi bi-x-circle me-1"></i> Clear
+                </button>
+            </div>
+            <!-- Preserve filter parameters in pagination links -->
+            <input type="hidden" name="time" value="{{ request.args.get('time', '') }}">
+            <input type="hidden" name="capacity" value="{{ request.args.get('capacity', '') }}">
+            {% for equip in request.args.getlist('equipment[]') %}
+                <input type="hidden" name="equipment[]" value="{{ equip }}">
             {% endfor %}
-        </ul>
-    {% else %}
-        <p>Không có phòng học nào khả dụng.</p>
-    {% endif %}
+        </form>
+    </div>
+
+    <div class="row g-3">
+        {% for space in spaces %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card shadow-sm space-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">Room {{ space.id }}</h5>
+                        <span class="status-icon">
+                            {% if space.status == 'available' %}
+                                <i class="fa-solid fa-circle-check" style="color: #63E6BE;"></i>
+                            {% elif space.status == 'reserved' %}
+                                <i class="fa-solid fa-circle-info" style="color: #FFD43B;"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-xmark" style="color: #ff0000;"></i>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <p class="card-text mb-1">
+                        <i class="bi bi-people"></i> {{ space.capacity }} peoples
+                    </p>
+                    <p class="card-text mb-1">
+                        {% if space.timeslot%}
+                            <i class="bi bi-clock"></i> {{ space.timeslot }}
+                        {% elif space.status == "In Maintenance" %}
+                            <i class="bi bi-clock"></i> {{ "In Maintenance" }}
+                        {% endif %}
+                    </p>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for tag in space.equipment %}
+                        <span class="badge bg-light border text-dark">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        {% if space.status == 'available' %}
+                        <a href="{{ url_for('reservation.reserve_space', space_id=space.id) }}" class="btn btn-primary btn-sm w-100 button-resize">Book now</a>
+                        {% elif space.status == 'reserved' and session.user.role == 'student' %}
+                        <a href="{{ url_for('reservation.checkin', space_id=space.id) }}" class="btn btn-warning btn-sm w-100">Check-In</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-container">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <!-- Previous Button -->
+                <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+                    {% set args = request.args.to_dict() %}
+                    {% set _ = args.pop('page', None) %}
+                    <a class="page-link" href="{{ url_for('reservation.dashboard', page=current_page-1, **args) }}" aria-label="Previous">
+                        <span aria-hidden="true">«</span>
+                    </a>
+                </li>
+
+                <!-- Page Numbers -->
+                {% set total_pages = (total_spaces / 12) | round(0, 'ceil') | int %}
+                {% set start_page = [1, current_page - 2] | max %}
+                {% set end_page = [total_pages, current_page + 2] | min %}
+                {% if start_page > 1 %}
+                    <li class="page-item">
+                        {% set args = request.args.to_dict() %}
+                        {% set _ = args.pop('page', None) %}
+                        <a class="page-link" href="{{ url_for('reservation.dashboard', page=1, **args) }}">1</a>
+                    </li>
+                    {% if start_page > 2 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endif %}
+                {% for page in range(start_page, end_page + 1) %}
+                    <li class="page-item {% if page == current_page %}active{% endif %}">
+                        {% set args = request.args.to_dict() %}
+                        {% set _ = args.pop('page', None) %}
+                        <a class="page-link" href="{{ url_for('reservation.dashboard', page=page, **args) }}">{{ page }}</a>
+                    </li>
+                {% endfor %}
+                {% if end_page < total_pages %}
+                    {% if end_page < total_pages - 1 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    <li class="page-item">
+                        {% set args = request.args.to_dict() %}
+                        {% set _ = args.pop('page', None) %}
+                        <a class="page-link" href="{{ url_for('reservation.dashboard', page=total_pages, **args) }}">{{ total_pages }}</a>
+                    </li>
+                {% endif %}
+
+                <!-- Next Button -->
+                <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+                    {% set args = request.args.to_dict() %}
+                    {% set _ = args.pop('page', None) %}
+                    <a class="page-link" href="{{ url_for('reservation.dashboard', page=current_page+1, **args) }}" aria-label="Next">
+                        <span aria-hidden="true">»</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 
     {% if session.user.role == 'admin' %}
-        <a href="{{ url_for('reservation.auto_cancel') }}" class="btn btn-danger mt-3">Tự động hủy đặt phòng hết hạn</a>
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('reservation.auto_cancel') }}" class="btn btn-danger w-100 auto-cancel-btn button-eff">Cancel expired reservations</a>
+    </div>
     {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const equipmentSelect = document.getElementById('equipment');
+        new Choices(equipmentSelect, {
+            removeItemButton: true,
+            placeholderValue: 'Select equipments',
+            classNames: {
+                containerOuter: 'choices form-control', // Add form-control class to match Bootstrap styling
+            }
+        });
+    });
+</script>
 {% endblock %}
