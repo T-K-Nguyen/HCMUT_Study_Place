@@ -29,8 +29,12 @@ def populate_initial_data():
         if not db.query(User).first():
             student1 = Student(userID=1, username="student1", name="Student One", email="student1@hcmut.edu.vn", password="123")
             student2 = Student(userID=2, username="student2", name="Student Two", email="student2@hcmut.edu.vn", password="123")
+            student3 = Student(userID=4, username="student4", name="Student four", email="student5@hcmut.edu.vn",
+                               password="123")
+            student4 = Student(userID=5, username="student5", name="Student five", email="student6@hcmut.edu.vn",
+                               password="123")
             admin = Admin(userID=3, username="admin1", name="Admin One", email="admin1@hcmut.edu.vn", password="admin")
-            db.add_all([student1, student2, admin])
+            db.add_all([student1, student2, student3, student4, admin])
 
             # Danh sách các phòng mẫu
             room1 = Room(roomID="P.100", type="individual", capacity=2, equipment='["Projector", "Air Conditioner"]',

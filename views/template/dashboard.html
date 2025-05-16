@@ -76,7 +76,11 @@
                         <i class="bi bi-people"></i> {{ space.capacity }} peoples
                     </p>
                     <p class="card-text mb-1">
-                        <i class="bi bi-clock"></i> {{ space.timeslot }}
+                        {% if space.timeslot%}
+                            <i class="bi bi-clock"></i> {{ space.timeslot }}
+                        {% elif space.status == "In Maintenance" %}
+                            <i class="bi bi-clock"></i> {{ "In Maintenance" }}
+                        {% endif %}
                     </p>
                     <div class="d-flex flex-wrap gap-1">
                         {% for tag in space.equipment %}

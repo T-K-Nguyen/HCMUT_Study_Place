@@ -31,7 +31,7 @@ def dashboard():
     criteria = {}
     if time_filter:
         start = datetime.strptime(time_filter, '%Y-%m-%dT%H:%M')
-        end = start + timedelta(hours=1)
+        end = start + timedelta(hours=1/600)
         criteria['timeSlot'] = DateTimeRange(startTime=start, endTime=end)
     if capacity:
         criteria['capacity'] = int(capacity)

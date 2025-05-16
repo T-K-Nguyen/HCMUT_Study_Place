@@ -74,9 +74,9 @@ def report():
 
     db = next(get_db())
     rooms = db.query(Room).options(joinedload(Room.timeSlot)).all()
-    bookings = db.query(Booking).all()
-    devices = db.query(IoTDevice).all()
-    db.close()
+    bookings = db.query(Booking).options(joinedload(Booking.timeSlot), joinedload(Booking.room)).all()
+    devices = db.query(IoTDevice).options(joinedload(IoTDevice.room)).all()
+    db.close()  # Safe to close the session here because all relationships are eagerly loaded
 
     total_rooms = len(rooms)
     total_bookings = len(bookings)
@@ -89,7 +89,7 @@ def report():
         equipment = ["Điều hòa", "Máy chiếu", "Đèn", "Cảm biến"]
         maintenance_date = datetime.strptime("11/12/2023", "%d/%m/%Y")
         device_reports.append({
-            'room': device.room,
+            'room': device.room if device.room else 'N/A',  # Eagerly loaded, no lazy loading needed
             'equipment': equipment,
             'maintenance_date': maintenance_date.strftime("%d/%m/%Y"),
             'needs_maintenance': device.status != 'on'

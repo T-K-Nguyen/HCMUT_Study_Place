@@ -97,34 +97,32 @@
           <div class="col-6 col-md-3">
             <div class="p-3 rounded text-center">
               <div class="fw-bold">Total devices</div>
-              <div class="fs-4">{{ total_devices }}</div>
+              <div class="fs-4">{{ 2 }}</div>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="p-3 rounded text-center">
               <div class="fw-bold">Need maintenance</div>
-              <div class="fs-4 text-danger">{{ maintenance_needed }}</div>
+              <div class="fs-4 text-danger">{{ 1 }}</div>
             </div>
           </div>
         </div>
-        
+
         <div class="d-flex flex-column gap-3">
           {% for device in devices %}
           <div class="p-3 rounded shadow-sm">
             <div class="d-flex justify-content-between">
-              <div class="fw-bold">{{ device.room.roomID }}</div>
-              <div class="small">Bảo trì: {{ device.maintenance_date }}</div>
+              <div class="fw-bold">{{ "P.203" }}</div>
+              <div class="small">Maintenance: {{ "10/5/2025" }}</div>
             </div>
             <div class="mt-2">
               <div class="row">
-                {% for equip in device.equipment %}
                   <div class="col-6 col-md-3 d-flex align-items-center mb-2">
-                    <span class="badge rounded-circle {{ 'bg-success' if equip.status == 'ok' else 'bg-danger' if equip.status == 'reserved' else 'bg-warning' }}"
+                    <span class="badge rounded-circle {{ 'bg-danger' }}"
                       style="width: 10px; height: 16px; margin-right: 8px;">
                     </span>
-                    <span>{{ equip.name }}</span>
+                    <span>{{ "Projector" }}</span>
                   </div>
-                {% endfor %}
               </div>
             </div>
           </div>

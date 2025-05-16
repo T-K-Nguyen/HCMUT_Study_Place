@@ -92,7 +92,7 @@
     "type": "group",
     "capacity": 6,
     "equipment": ["Projector", "Air Conditioner"],
-    "status": "available",
+    "status": "In Maintenance",
     "location": "Building B"
   }
 ]
