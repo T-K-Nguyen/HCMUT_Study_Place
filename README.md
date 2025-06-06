@@ -15,6 +15,50 @@ The HCMUT Study Place Management System is a web-based application designed to s
 - ✅ Equipment Management: Track and manage room equipment, such as projectors and air conditioners.
 - ✅ Responsive Design: Fully responsive interface, optimized for both desktop and mobile devices, ensuring a seamless experience across all screen sizes.
 
+### 🔍 Feature Screenshots
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="Screenshots/signin.jpg" width="200"/><br/>
+      <i>Room Reservation</i>
+    </td>
+    <td align="center">
+      <img src="Screenshots/hello.jpg" width="200"/><br/>
+      <i>Hello User Screen</i>
+    </td>
+    <td align="center">
+      <img src="Screenshots/dashboard.jpg" width="200"/><br/>
+      <i>Room Status</i>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="Screenshots/booking.jpg" width="200"/><br/>
+      <i>Booking Display</i>
+    </td>
+    <td align="center">
+      <img src="Screenshots/qrcode.jpg" width="200"/><br/>
+      <i>Booking Success</i>
+    </td>
+    <td align="center">
+      <img src="Screenshots/camera.jpg" width="200"/><br/>
+      <i>QR Check-In</i>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="Screenshots/darkmode.jpg" width="200"/><br/>
+      <i>Dark Mode</i>
+    </td>
+    <td align="center">
+      <img src="Screenshots/report.jpg" width="200"/><br/>
+      <i>Report View</i>
+    </td>
+    <td></td>
+  </tr>
+</table>
+
 ## 🛠️ Technologies Used
 - Backend: Python 3.8+, Flask/Django (or specify your framework)
 - Database: SQLite (configurable with SQLAlchemy for other databases)
@@ -37,13 +81,6 @@ $ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```bash
 $ python app.py
 ```
-## 📸 Demonstration
-The following screenshot displays the home page.
-<p align="center">
-  <img src="Demo/hardware_image.jpg" width="600">
-  <br/>
-  <i>Hardware setup of the Smart Card Scanning system</i>
-</p>
 
 ## 🚀 Future Improvements
 To enhance the system’s functionality and user experience, the following improvements are planned:
