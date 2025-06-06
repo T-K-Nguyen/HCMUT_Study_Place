@@ -59,6 +59,29 @@ The HCMUT Study Place Management System is a web-based application designed to s
   </tr>
 </table>
 
+## 🛠️ Technologies Used
+- Backend: Python 3.8+, Flask/Django (or specify your framework)
+- Database: SQLite (configurable with SQLAlchemy for other databases)
+- Frontend: HTML, CSS, JavaScript (or specify frameworks like React, if used)
+- Authentication: JWT or session-based authentication
+- Other Tools: Git for version control, Pip for package management
+## ⚙️ Installation
+Follow these steps to set up the project locally:
+1. Clone this repository
+```bash
+$ git clone https://github.com/T-K-Nguyen/HCMUT_Study_Place.git
+$ cd HCMUT_Study_Place
+```
+2. Create a Virtual Environment (recommended)
+```bash
+$ python -m venv venv
+$ source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+3. Run the application
+```bash
+$ python app.py
+```
+
 ## 🧱 System Architecture
 
 The system follows the **Model-View-Controller (MVC)** architecture for clear separation of concerns and maintainability.
@@ -84,29 +107,45 @@ The system follows the **Model-View-Controller (MVC)** architecture for clear se
 
 > 🧩 This structure ensures that the user interface, logic, and data layers are modular, testable, and scalable.
 
+### 📚 Class Diagram
 
-## 🛠️ Technologies Used
-- Backend: Python 3.8+, Flask/Django (or specify your framework)
-- Database: SQLite (configurable with SQLAlchemy for other databases)
-- Frontend: HTML, CSS, JavaScript (or specify frameworks like React, if used)
-- Authentication: JWT or session-based authentication
-- Other Tools: Git for version control, Pip for package management
-## ⚙️ Installation
-Follow these steps to set up the project locally:
-1. Clone this repository
-```bash
-$ git clone https://github.com/T-K-Nguyen/HCMUT_Study_Place.git
-$ cd HCMUT_Study_Place
-```
-2. Create a Virtual Environment (recommended)
-```bash
-$ python -m venv venv
-$ source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-3. Run the application
-```bash
-$ python app.py
-```
+The class structure reflects the major components of the system, organized for scalability and maintainability.
+
+<p align="center">
+  <img src="Screenshots/class.png" width="700"/>
+  <br/>
+  <i>Figure: Class Diagram of the Study Place Management System</i>
+</p>
+
+**Main Entities:**
+
+- **User (abstract)**  
+  - `username`, `password`, `role`  
+  - Subclasses: `Student`, `Admin`  
+
+- **Room**  
+  - `roomID`, `capacity`, `status`, `equipment`  
+  - Methods: `isAvailable()`, `updateStatus()`
+
+- **Booking**  
+  - `bookingID`, `student`, `room`, `timeSlot`, `status`  
+  - Methods: `confirm()`, `cancel()`
+
+- **RoomSchedule**  
+  - `roomID`, `timeSlotList`  
+  - Methods: `checkConflict()`
+
+- **IoTDevice**  
+  - `deviceID`, `room`, `type`, `status`  
+  - Methods: `readSensor()`, `sendAlert()`
+
+- **SensorData**  
+  - `sensorID`, `timestamp`, `temperature`, `occupancy`, `deviceID`
+
+- **Report / Notification / Rating**  
+  - For admin use: generate reports, notify students, track feedback
+
+> 📐 This diagram reflects the logical model for both backend functionality and admin/student interaction.
 
 ## 🚀 Future Improvements
 To enhance the system’s functionality and user experience, the following improvements are planned:
