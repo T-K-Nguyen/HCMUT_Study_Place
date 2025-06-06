@@ -59,6 +59,32 @@ The HCMUT Study Place Management System is a web-based application designed to s
   </tr>
 </table>
 
+## 🧱 System Architecture
+
+The system follows the **Model-View-Controller (MVC)** architecture for clear separation of concerns and maintainability.
+<p align="center"> 
+ <img src="Screenshots/mvc.png" width="600"/> 
+ <br/> <i>Figure: MVC Architecture of the Study Place Management System</i> 
+</p>
+- **🧠 Model**: Encapsulates core business logic and data, including:
+  - `User`, `Student`, `Admin`: Handles authentication and roles.
+  - `Room`, `RoomSchedule`, `Booking`: Manages room availability and reservations.
+  - `IoTDevice`, `SensorData`: Monitors real-time status and environmental data from smart devices.
+
+- **🖼️ View**: Consists of HTML templates rendered by Flask (using Jinja2). Key templates include:
+  - `login.html`: User login.
+  - `dashboard.html`: Room listings and filters.
+  - `checkin.html`: QR code check-in interface.
+  - `report.html`: Admin report dashboard with IoT and booking stats.
+
+- **🎮 Controller**: Implements Flask routes and logic using Blueprints:
+  - `auth_controller.py`: Handles authentication (`/login`, `/logout`).
+  - `reservation_controller.py`: Manages booking, check-in, auto-cancellation.
+  - `iot_controller.py`: Controls and monitors IoT device interactions.
+
+> 🧩 This structure ensures that the user interface, logic, and data layers are modular, testable, and scalable.
+
+
 ## 🛠️ Technologies Used
 - Backend: Python 3.8+, Flask/Django (or specify your framework)
 - Database: SQLite (configurable with SQLAlchemy for other databases)
